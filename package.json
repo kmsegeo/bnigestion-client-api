@@ -1,0 +1,23 @@
+{
+  "name": "bnigestion-client-api",
+  "version": "1.0.0",
+  "description": "Application de gestion de fonds commun de placement",
+  "homepage": "https://github.com/kmsegeo/bnigestion-client-api#readme",
+  "bugs": {
+    "url": "https://github.com/kmsegeo/bnigestion-client-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kmsegeo/bnigestion-client-api.git"
+  },
+  "license": "ISC",
+  "author": "Serge KOUAME",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
