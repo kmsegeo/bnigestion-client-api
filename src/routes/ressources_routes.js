@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const app_auth = require('../middlewares/app_auth');
+const clientRsrcController = require('../controllers/ressouces_controller');
 const session_verify = require('../middlewares/session_verify');
-const clientRsrcController = require('../controllers/client_ressouces_controller');
 const operationController = require('../controllers/operation_controller');
 
 router.get('/type-acteurs', app_auth, clientRsrcController.getAllTypeActeurs);

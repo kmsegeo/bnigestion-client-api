@@ -158,6 +158,13 @@ const Entreprise = {
         return res.rows[0];
     },
 
+    async findByActeurId(id) {
+        const query_string = `SELECT * FROM ${this.table_name} WHERE e_acteur=$1`;
+        const res = await db.query(query_string, [id]);
+        delete res.rows[0].e_acteur;
+        return res.rows[0];
+    },
+
 }
 
 module.exports = {
