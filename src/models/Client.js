@@ -93,9 +93,16 @@ const Particulier = {
         return res.rows[0];
     },
 
-    async setAtsgoCallbackData(particulier_id, atsgo_id_client, atsgo_compte_titre, atsgo_compte_espece) {
-        const query_string = `UPDATE ${this.table_name} SET r_atsgo_id_client=$1, r_ncompte_titre=$2, r_ncompte_espece=$3 WHERE r_i=$4 RETURNING *`;
-        const res = await db.query(query_string, [atsgo_id_client, atsgo_compte_titre, atsgo_compte_espece, particulier_id]);
+    // async setAtsgoCallbackData(particulier_id, atsgo_id_client, atsgo_compte_titre, atsgo_compte_espece) {
+    //     const query_string = `UPDATE ${this.table_name} SET r_atsgo_id_client=$1, r_ncompte_titre=$2, r_ncompte_espece=$3 WHERE r_i=$4 RETURNING *`;
+    //     const res = await db.query(query_string, [atsgo_id_client, atsgo_compte_titre, atsgo_compte_espece, particulier_id]);
+    //     return res.rows[0];
+    // },
+
+    async findByActeurId(id) {
+        const query_string = `SELECT * FROM ${this.table_name} WHERE e_acteur=$1`;
+        const res = await db.query(query_string, [id]);
+        delete res.rows[0].e_acteur;
         return res.rows[0];
     },
 

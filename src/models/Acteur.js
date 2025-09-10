@@ -60,7 +60,7 @@ const Acteur = {
           r_profil_investisseur,
           r_langue, 
           r_statut,
-          e_type_acteur,
+          e_type_acteur
         FROM ${this.tableName} 
         WHERE r_i = $1`;
 

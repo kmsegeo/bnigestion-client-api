@@ -1,5 +1,5 @@
 const db = require('../config/database');
-const OTP = require('../models/OTP');
+const Message = require('../models/Message');
 const TypeOperation = require('../models/TypeOperation');
 
 const Utils = {
@@ -47,50 +47,55 @@ const Utils = {
         return operation;
     },
 
-    async calculProflInvestisseur(point_total) {
+    // async calculProflInvestisseur(point_total) {
 
-        let profil_investisseur = null;
-        let souhait = null;
-        let inconvenient = null;
-        let recommandation = null;
+    //     let profil_investisseur = null;
+    //     let souhait = null;
+    //     let inconvenient = null;
+    //     let recommandation = null;
 
-        if (point_total >= 0 && point_total <= 20) {
-            profil_investisseur = 'Prudent';
-            souhait = 'Protection de votre capital avec une faible prise de risques.';
-            inconvenient = 'La valeur de vos investissements évoluera faiblement.';
-            recommandation = 'FCP BRIDGE OBLIGATIONS';
-        } else if (point_total >= 21 && point_total <= 29) {
-            profil_investisseur = 'Équilibré';
-            souhait = 'Croissance de vos investissements sur le moyen et le long terme, avec une prise de risques modérée.';
-            inconvenient = 'La valeur de vos investissements pourrait diminuer.';
-            recommandation = 'FCP BRIDGE EQUILIBRE';
-        } else if (point_total >= 30 && point_total <= 39) {
-            profil_investisseur = 'Dynamique';
-            souhait = 'Croissance de vos investissements sur le long terme, avec une prise de risques élevée.';
-            inconvenient = 'La valeur de vos investissements pourrait diminuer.';
-            recommandation = 'FCP BRIDGE DIVERSIFIE CROISSANCE';
-        } else if (point_total >= 40 ) {
-            profil_investisseur = 'Audacieux';
-            souhait = 'Maximiser la croissance de vos investissements sur le long terme, avec une prise de risques très élevée.';
-            inconvenient = 'La valeur de votre investissement initial pourrait fortement diminuer.';
-            recommandation = 'PORTEFEUILLE ACTIONS BRIDGE SECURITIES';
-        } 
+    //     if (point_total >= 0 && point_total <= 20) {
+    //         profil_investisseur = 'Prudent';
+    //         souhait = 'Protection de votre capital avec une faible prise de risques.';
+    //         inconvenient = 'La valeur de vos investissements évoluera faiblement.';
+    //         recommandation = 'FCP BRIDGE OBLIGATIONS';
+    //     } else if (point_total >= 21 && point_total <= 29) {
+    //         profil_investisseur = 'Équilibré';
+    //         souhait = 'Croissance de vos investissements sur le moyen et le long terme, avec une prise de risques modérée.';
+    //         inconvenient = 'La valeur de vos investissements pourrait diminuer.';
+    //         recommandation = 'FCP BRIDGE EQUILIBRE';
+    //     } else if (point_total >= 30 && point_total <= 39) {
+    //         profil_investisseur = 'Dynamique';
+    //         souhait = 'Croissance de vos investissements sur le long terme, avec une prise de risques élevée.';
+    //         inconvenient = 'La valeur de vos investissements pourrait diminuer.';
+    //         recommandation = 'FCP BRIDGE DIVERSIFIE CROISSANCE';
+    //     } else if (point_total >= 40 ) {
+    //         profil_investisseur = 'Audacieux';
+    //         souhait = 'Maximiser la croissance de vos investissements sur le long terme, avec une prise de risques très élevée.';
+    //         inconvenient = 'La valeur de votre investissement initial pourrait fortement diminuer.';
+    //         recommandation = 'PORTEFEUILLE ACTIONS BRIDGE SECURITIES';
+    //     } 
 
-        return {point_total, profil_investisseur, souhait, inconvenient, recommandation} ;
-    },
+    //     return {point_total, profil_investisseur, souhait, inconvenient, recommandation} ;
+    // },
 
     async genearteOTP_Msgid() {
-        const res = await db.query(`SELECT * FROM t_otp ORDER BY r_i DESC LIMIT 1`, []);
-        const row = res.rows[0];
-
-        if (!row) return `BAM1000000000`;
-
-        const prefix = "BAM";
-        const msgid = row["r_msgid"];
-        const surfix = msgid.split(prefix)[1];
-        const n_surfix = parseInt(surfix) + 1;
+        // const res = await db.query(`SELECT * FROM t_msg ORDER BY r_i DESC LIMIT 1`, []);
+        // const row = res.rows[0];
         
-        return prefix + n_surfix;
+        // if (!row) return `BNI1000000000`;
+
+        // const prefix = "BNI";
+        // const msgid = row["r_msgid"];
+        // const surfix = msgid.split(prefix)[1];
+        // const n_surfix = parseInt(surfix) + 1;
+        
+        // return prefix + n_surfix;
+        return `BNI${new Date().getTime()}`;
+    },
+
+    async genearte_msgid() {
+        return `BNI${new Date().getTime()}`;
     },
 
     async aleatoireOTP() {
@@ -99,10 +104,10 @@ const Utils = {
         return Math.floor(Math.random() * (max - min)) + min;
     },
 
-    async sendNotificationSMS(acteur_id, mobile, notification, operation, callback) {
+    async sendNotificationSMS(acteur_id, type, mobile, notification, operation, callback) {
 
-        await Utils.genearteOTP_Msgid().then(async msgid => {
-            await OTP.create(acteur_id, {msgid, code_otp:notification, operation}).then(async message => {      // Operation 3: Notification
+        await Utils.genearte_msgid().then(async msgid => {
+            await Message.create(acteur_id, {msgid, type, contenu:notification, operation}).then(async message => {                 // Operation: 1: activation, 2: reinitialisation, 3: notification
                 
                 fetch(process.env.ML_SMSCI_URL, {
                     method: "POST",
@@ -112,10 +117,10 @@ const Utils = {
                     body: JSON.stringify({
                         identify: process.env.ML_SMS_ID,
                         pwd: process.env.ML_SMS_PWD,
-                        fromad: "BAM CI",
+                        fromad: "BNI CI",
                         toad: mobile,
                         msgid: msgid,
-                        text: message.r_code_otp
+                        text: message.r_contenu
                     })
                 }).then(res => res.json()).then(sms_data => {
                     if (sms_data!=1) console.log(`Envoi de message echoué`, sms_data);
