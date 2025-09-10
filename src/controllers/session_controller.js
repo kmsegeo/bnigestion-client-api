@@ -4,7 +4,7 @@ const Utils = require("../utils/utils.methods");
 const Session = require("../models/Session");
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
-const { TypeActeur, Particulier, Entreprise } = require("../models/Client");
+const { Particulier, Entreprise } = require("../models/Client");
 const Document = require("../models/Document");
 
 const connect = async (req, res, next) => {
@@ -97,6 +97,36 @@ const connect = async (req, res, next) => {
     }).catch(error => response(res, 400, error));
 }
 
+const loadActiveSsessions = async (req, res, next) => {
+    /**
+     * [x] Charger les sessions actives de l'agent
+     */
+    console.log(`Chargement des sessions de l'acteur`);
+    await Session.findAllByActeur(req.session.e_acteur).then(sessions => {
+        for (let index = 0; index < sessions.length; index++)
+            delete sessions[index].r_statut;
+        return response(res, 200, "Chargement terminé", sessions);
+    }).catch(error => next(error));
+}
+
+const destroySession = async (req, res, next) => {
+    /**
+     * [x] Vérifier que la session reférencée existe
+     * [x] Destruuire la session active selectionnée de l'agent
+     */
+    console.log(`Destruction de la session: ${req.params.ref}`);
+    await Session.findByRef(req.params.ref).then(async session => {
+        if (!session) return response(res, 404, "Session non trouvée");
+        await Session.destroy({
+            acteur: req.session.e_acteur, 
+            ref: req.params.ref
+        }).then(() => response(res, 200, "Session détruite"))
+        .catch(error => next(error));
+    }).catch(error => next(error));
+}
+
 module.exports = {
-    connect
+    connect,
+    loadActiveSsessions,
+    destroySession
 }
