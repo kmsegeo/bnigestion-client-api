@@ -6,7 +6,7 @@ const session_verify = require('../middlewares/session_verify');
 const operationController = require('../controllers/operation_controller');
 
 router.get('/type-acteurs', app_auth, clientRsrcController.getAllTypeActeurs);
-// router.get('/type-operations', app_auth, session_verify, operationController.getAllTypeOperations);
+router.get('/type-operations', app_auth, session_verify, operationController.getAllTypeOperations);
 
 // router.get('/type-compte', app_auth, clientRsrcController.getTypeCompte);
 // router.get('/contexte-ouverture-compte', app_auth, clientRsrcController.getContexteOuvertureCompte);
