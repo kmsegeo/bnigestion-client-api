@@ -128,5 +128,5 @@ const destroySession = async (req, res, next) => {
 module.exports = {
     connect,
     loadActiveSsessions,
-    destroySession
+    destroySession,
 }

@@ -117,6 +117,30 @@ const Acteur = {
     return res.rows[0];
   },
 
+  async findByEmailOrMobile(identifiant) {
+
+    const queryString = `SELECT 
+        r_i,
+        r_nom_complet, 
+        r_email, 
+        r_telephone_prp, 
+        r_telephone_scd, 
+        r_adresse,
+        r_date_creer, 
+        r_date_modif, 
+        r_date_activation,
+        r_profil_investisseur,
+        r_langue,
+        r_mdp, 
+        r_statut,
+        e_type_acteur
+      FROM ${this.tableName} 
+      WHERE r_email = $1 OR r_telephone_prp = $1`;
+      
+    const res = await db.query(queryString, [identifiant]);
+    return res.rows[0];
+  },
+
   async findAllByTypeActeur(typeActeur) {
     const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_type_acteur=$1`, [typeActeur]);
     return res.rows;
