@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
 const { Particulier, Entreprise } = require("../models/Client");
 const Document = require("../models/Document");
+const Portefeuille = require("../models/Portefeuille");
 
 const connect = async (req, res, next) => {
     
@@ -97,6 +98,23 @@ const connect = async (req, res, next) => {
     }).catch(error => response(res, 400, error));
 }
 
+const loadSommaire = async (req, res, next) => {
+
+    /**
+     * [ ] Charger le compte de depots
+     * [ ] Charger la valeur totale des portefeuilles du client
+     * [ ] Charger l'historique des portefeuilles
+     * [ ] Charger la liste des fonds, comportant la dernière valeur liquidative par fonds
+     */
+    console.log(`Chargement du sommaire..`);
+    return response(res, 200, "Chargement terminé", {
+        compte_depot: 0,
+        total_portefeuille: 0,
+        portefeuilles: [],
+        fonds: []
+    }); 
+}
+
 const loadActiveSsessions = async (req, res, next) => {
     /**
      * [x] Charger les sessions actives de l'agent
@@ -127,6 +145,7 @@ const destroySession = async (req, res, next) => {
 
 module.exports = {
     connect,
+    loadSommaire,
     loadActiveSsessions,
     destroySession,
 }

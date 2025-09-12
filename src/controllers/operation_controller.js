@@ -16,7 +16,10 @@ const getAllTypeOperations = async (req, res, next) => {
         .catch(err => next(err));
 }
 
-// const getAllActeurOperations = async (req, res, next) => {
+const getAllActeurOperations = async (req, res, next) => {
+
+
+    return response(res, 200, `Chargement de l'historique des opérations`, []);
 
 //     console.log('Chargement de l\'historique des opération...')
 //     if (req.headers.op_code!='TYOP-003') return response(res, 403, `Type opération non authorisé !`); 
@@ -49,94 +52,103 @@ const getAllTypeOperations = async (req, res, next) => {
 //         }).catch(err => next(err));
 //     }).catch(err => next(err));
     
-// }
+}
 
-// const opSouscription = async (req, res, next) => {
+const getOneOperation = async (req, res, next) => { 
+    const {ref} = req.params.ref;
+    if (!ref) return response(res, 400, `Référence de l'opération est obligatoire !`, {ref});
+}
+
+const opDepot = async (req, res, next) => {
+    return response(res, 200, `Opération de dépôt en cours de traitement`, {});
+}
+
+const opSouscription = async (req, res, next) => {
     
-//     console.log(`Opération de souscription..`);
+    console.log(`Opération de souscription..`);
 
-//     const op_code = 'TYOP-006';
-//     const moyen_paiement = 'TMOP-003';
+    const op_code = 'TYOP-006';
+    const moyen_paiement = 'TMOP-003';
 
-//     if (req.headers.op_code!=op_code) return response(res, 403, `Type opération non authorisé !`);
+    if (req.headers.op_code!=op_code) return response(res, 403, `Type opération non authorisé !`);
     
-//     const apikey = req.apikey.r_valeur;
-//     const {idFcp, montant, mobile_payeur, callback_erreur, callback_succes} = req.body;
-//     const acteur_id = req.session.e_acteur;
+    const apikey = req.apikey.r_valeur;
+    const {idFcp, montant, mobile_payeur, callback_erreur, callback_succes} = req.body;
+    const acteur_id = req.session.e_acteur;
 
-//     Utils.expectedParameters({idFcp, montant}).then(async () => {
+    Utils.expectedParameters({idFcp, montant}).then(async () => {
 
-//         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant de soucription !`, {montant});
+        if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant de soucription !`, {montant});
 
-//         const frais_operateur = Number(montant/100);
+        const frais_operateur = Number(montant/100);
 
-//         console.log(`Vérification de la valleur liquidative du fonds`)
-//         const fonds_url = `${process.env.ATSGO_URL + process.env.URI_FONDS}?ApiKey=${apikey}`;
-//         console.log(fonds_url);
+        console.log(`Vérification de la valleur liquidative du fonds`)
+        const fonds_url = `${process.env.ATSGO_URL + process.env.URI_FONDS}?ApiKey=${apikey}`;
+        console.log(fonds_url);
 
-//         await fetch(fonds_url).then(async res => res.json()).then(async data => {
-//             if (data.status!=200) return response(res, 403, `Une erreur lors de la récupération des fonds !`);
+        await fetch(fonds_url).then(async res => res.json()).then(async data => {
+            if (data.status!=200) return response(res, 403, `Une erreur lors de la récupération des fonds !`);
             
-//             let fonds = null;
+            let fonds = null;
 
-//             for (let f of data.payLoad) 
-//                 if (f.idFcp==idFcp) fonds = f;
+            for (let f of data.payLoad) 
+                if (f.idFcp==idFcp) fonds = f;
 
-//             if (!fonds)
-//                 return response(res, 404, `Fonds introuvable !`);
+            if (!fonds)
+                return response(res, 404, `Fonds introuvable !`);
 
-//             if (Number(montant) < Number(fonds.vl))
-//                 return response(res, 403, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
+            if (Number(montant) < Number(fonds.vl))
+                return response(res, 403, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
                 
-//             console.log(`Recupération des données client`)
-//             await Acteur.findById(acteur_id).then(async acteur => {
-//                 await Particulier.findById(acteur.e_particulier).then(async particulier => {
+            console.log(`Recupération des données client`)
+            await Acteur.findById(acteur_id).then(async acteur => {
+                await Particulier.findById(acteur.e_particulier).then(async particulier => {
                     
-//                     const idClient = particulier.r_atsgo_id_client;
+                    const idClient = particulier.r_atsgo_id_client;
 
-//                     await TypeOperation.findByCode(op_code).then(async type_operation => {
-//                         if(!type_operation) return response(res, 404, `Type opération non trouvé !`);
+                    await TypeOperation.findByCode(op_code).then(async type_operation => {
+                        if(!type_operation) return response(res, 404, `Type opération non trouvé !`);
 
-//                             console.log(`Initialisation de paiement wave`);
-//                             const op_ref = uuid.v4();
+                            console.log(`Initialisation de paiement wave`);
+                            const op_ref = uuid.v4();
 
-//                             await Wave.checkout(montant, frais_operateur, mobile_payeur, callback_erreur, callback_succes, op_ref, async data => {
+                            await Wave.checkout(montant, frais_operateur, mobile_payeur, callback_erreur, callback_succes, op_ref, async data => {
                         
-//                                 await Operation.create(acteur_id, type_operation.r_i, 0, idFcp, op_ref, { 
-//                                     reference_operateur: data.id, 
-//                                     libelle: 'SOUSCRIPTION FCP BRIDGE - N° DE TRANSACTION: ' + mobile_payeur, 
-//                                     montant: montant, 
-//                                     frais_operateur: frais_operateur, 
-//                                     frais_operation: null, 
-//                                     compte_paiement: idClient
-//                                 }).then(async operation => {
+                                await Operation.create(acteur_id, type_operation.r_i, 0, idFcp, op_ref, { 
+                                    reference_operateur: data.id, 
+                                    libelle: 'SOUSCRIPTION FCP BRIDGE - N° DE TRANSACTION: ' + mobile_payeur, 
+                                    montant: montant, 
+                                    frais_operateur: frais_operateur, 
+                                    frais_operation: null, 
+                                    compte_paiement: idClient
+                                }).then(async operation => {
 
-//                                     if (!operation) return response(res, 400, `Initialisation de paiement échoué !`);
+                                    if (!operation) return response(res, 400, `Initialisation de paiement échoué !`);
 
-//                                     let transfert_data = {
-//                                         reference_operation: operation.r_reference,
-//                                         ref_wave: data.id,
-//                                         montant: data.amount,
-//                                         devise: data.currency,
-//                                         paiement_url: data.wave_launch_url,
-//                                         date_creation: data.when_created,
-//                                         date_expire: data.when_expires
-//                                     }
+                                    let transfert_data = {
+                                        reference_operation: operation.r_reference,
+                                        ref_wave: data.id,
+                                        montant: data.amount,
+                                        devise: data.currency,
+                                        paiement_url: data.wave_launch_url,
+                                        date_creation: data.when_created,
+                                        date_expire: data.when_expires
+                                    }
 
-//                                     const notification = `Souscription:\nRef.Wave: ${data.id}\nMontant: ${data.amount} ${data.currency}.\nConfirmez: ${data.wave_launch_url}`;
-//                                     await Utils.sendNotificationSMS(acteur_id, mobile_payeur, notification, 3, () => {});
+                                    const notification = `Souscription:\nRef.Wave: ${data.id}\nMontant: ${data.amount} ${data.currency}.\nConfirmez: ${data.wave_launch_url}`;
+                                    await Utils.sendNotificationSMS(acteur_id, mobile_payeur, notification, 3, () => {});
                                     
-//                                     return response(res, 200, `Initialisation de paiement réussi`, transfert_data);
+                                    return response(res, 200, `Initialisation de paiement réussi`, transfert_data);
 
-//                                 }).catch(err => next(err));
-//                             }).catch(err => next(err));
-//                     }).catch(err => next(err));
-//                 }).catch(err => next(err));
-//             }).catch(err => next(err));
-//         }).catch(err => next(err)); 
-//     }).catch(err => response(res, 400, err));
+                                }).catch(err => next(err));
+                            }).catch(err => next(err));
+                    }).catch(err => next(err));
+                }).catch(err => next(err));
+            }).catch(err => next(err));
+        }).catch(err => next(err)); 
+    }).catch(err => response(res, 400, err));
 
-// };
+};
 
 // const opSouscriptionCompleted = async (req, res, next) => {
 
@@ -230,100 +242,100 @@ const getAllTypeOperations = async (req, res, next) => {
 //     }).catch(err => console.error(err));
 // };
 
-// const opRachat = async (req, res, next) => {
+const opRachat = async (req, res, next) => {
 
-//     console.log(`Opération de rachat..`);
-//     const op_code = 'TYOP-007';
+    console.log(`Opération de rachat..`);
+    const op_code = 'TYOP-007';
     
-//     if (req.headers.op_code!=op_code) return response(res, 403, `Type opération non authorisé !`);
+    if (req.headers.op_code!=op_code) return response(res, 403, `Type opération non authorisé !`);
     
-//     const apikey = req.apikey.r_valeur;
-//     const {idFcp, montant, moyen_paiement} = req.body;
-//     const acteur_id = req.session.e_acteur;
+    const apikey = req.apikey.r_valeur;
+    const {idFcp, montant, moyen_paiement} = req.body;
+    const acteur_id = req.session.e_acteur;
 
-//     Utils.expectedParameters({idFcp, montant}).then(async () => {
+    Utils.expectedParameters({idFcp, montant}).then(async () => {
         
-//         console.log(`Recupération des données client`)
-//         await Acteur.findById(acteur_id).then(async acteur => {
-//             await Particulier.findById(acteur.e_particulier).then(async particulier => {
+        console.log(`Recupération des données client`)
+        await Acteur.findById(acteur_id).then(async acteur => {
+            await Particulier.findById(acteur.e_particulier).then(async particulier => {
                 
-//                 await TypeOperation.findByCode(op_code).then(async type_operation => {
-//                     if(!type_operation) return response(res, 404, `Type opération non trouvé !`);
+                await TypeOperation.findByCode(op_code).then(async type_operation => {
+                    if(!type_operation) return response(res, 404, `Type opération non trouvé !`);
 
-//                     const op_ref = uuid.v4();
-//                     const libelle = `RACHAT FCP BRIDGE - N° DE TRANSACTION: `
-//                     const date = new Date();
-//                     // const idClient = particulier.r_ncompte_titre;
-//                     const idClient = particulier.r_atsgo_id_client;
+                    const op_ref = uuid.v4();
+                    const libelle = `RACHAT FCP BRIDGE - N° DE TRANSACTION: `
+                    const date = new Date();
+                    // const idClient = particulier.r_ncompte_titre;
+                    const idClient = particulier.r_atsgo_id_client;
 
-//                     console.log(`Enregistrement de mouvement..`)
+                    console.log(`Enregistrement de mouvement..`)
 
-//                     await Atsgo.saveOperation(apikey, {
-//                         idFcp, 
-//                         idClient, 
-//                         referenceOperation: op_ref, 
-//                         idTypeOperation: 3,             // 2:Souscription - 3:Rachat
-//                         libelle: "RETRAIT DE FONDS DE PLACEMENT", 
-//                         dateValeur: date, 
-//                         idModePaiement: 7,              // 7: Paiement espece
-//                         refModePaiement: "TMOP-002",
-//                         montant: montant
-//                     }, async (operaton_data) => {
-//                         await Atsgo.saveMouvement(apikey, {
-//                             idTypeMouvement: 2,         // 1:Apport Liquidité - 2:Retrait de Liquidités
-//                             idClient,
-//                             idFcp,
-//                             date: date,
-//                             dateMouvement: date,
-//                             dateValeur: date,
-//                             idModePaiement: 7,          // 7: Paiement espece
-//                             refModePaiement: "TMOP-002",
-//                             montant: montant,
-//                             libelle: libelle
-//                         }, async (mouvement_data) => {
+                    await Atsgo.saveOperation(apikey, {
+                        idFcp, 
+                        idClient, 
+                        referenceOperation: op_ref, 
+                        idTypeOperation: 3,             // 2:Souscription - 3:Rachat
+                        libelle: "RETRAIT DE FONDS DE PLACEMENT", 
+                        dateValeur: date, 
+                        idModePaiement: 7,              // 7: Paiement espece
+                        refModePaiement: "TMOP-002",
+                        montant: montant
+                    }, async (operaton_data) => {
+                        await Atsgo.saveMouvement(apikey, {
+                            idTypeMouvement: 2,         // 1:Apport Liquidité - 2:Retrait de Liquidités
+                            idClient,
+                            idFcp,
+                            date: date,
+                            dateMouvement: date,
+                            dateValeur: date,
+                            idModePaiement: 7,          // 7: Paiement espece
+                            refModePaiement: "TMOP-002",
+                            montant: montant,
+                            libelle: libelle
+                        }, async (mouvement_data) => {
 
-//                             await Operation.create(acteur_id, type_operation.r_i, 0, idFcp, op_ref, { 
-//                                 reference_operateur: "", 
-//                                 libelle: libelle, 
-//                                 montant: montant, 
-//                                 frais_operateur: null, 
-//                                 frais_operation: null, 
-//                                 compte_paiement: idClient
-//                             }).then(async operation => {
-//                                 if (!operation) return response(res, 400, `Initialisation de paiement échoué !`);
+                            await Operation.create(acteur_id, type_operation.r_i, 0, idFcp, op_ref, { 
+                                reference_operateur: "", 
+                                libelle: libelle, 
+                                montant: montant, 
+                                frais_operateur: null, 
+                                frais_operation: null, 
+                                compte_paiement: idClient
+                            }).then(async operation => {
+                                if (!operation) return response(res, 400, `Initialisation de paiement échoué !`);
 
-//                                 const notification = `Demande de rachat:\nVotre demande à été soumise.\nNo.Opération:${operaton_data}\nMontant: ${montant}XOF\nRef.Operation: ${operation.r_reference}`;
-//                                 Utils.sendNotificationSMS(acteur.r_i, acteur.r_telephone_prp, notification, 3, () => {
-//                                     console.log(`Opération de rachat envoyé avec succès`, { reference: operation.r_reference });
-//                                 });
+                                const notification = `Demande de rachat:\nVotre demande à été soumise.\nNo.Opération:${operaton_data}\nMontant: ${montant}XOF\nRef.Operation: ${operation.r_reference}`;
+                                Utils.sendNotificationSMS(acteur.r_i, acteur.r_telephone_prp, notification, 3, () => {
+                                    console.log(`Opération de rachat envoyé avec succès`, { reference: operation.r_reference });
+                                });
 
-//                             }).catch(err => next(err));
+                            }).catch(err => next(err));
 
-//                             const data = {
-//                                 idOperation: mouvement_data,
-//                                 moyen_paiement: "TMOP-002",
-//                                 montant: montant,
-//                                 devise: "XOF",
-//                                 date_creation: date
-//                             }
+                            const data = {
+                                idOperation: mouvement_data,
+                                moyen_paiement: "TMOP-002",
+                                montant: montant,
+                                devise: "XOF",
+                                date_creation: date
+                            }
 
-//                             return response(res, 200, `Operation de rachat en cours de traitement`, data);
+                            return response(res, 200, `Operation de rachat en cours de traitement`, data);
 
-//                         }).catch(err => next(err));
-//                     }).catch(err => next(err));
-//                 }).catch(err => next(err));
-//             }).catch(err => next(err));
-//         }).catch(err => next(err));
-//     }).catch(err => response(res, 400, err));
-// };
+                        }).catch(err => next(err));
+                    }).catch(err => next(err));
+                }).catch(err => next(err));
+            }).catch(err => next(err));
+        }).catch(err => next(err));
+    }).catch(err => response(res, 400, err));
+};
 
-// const opTransfert = async (req, res, next) => {
-//     console.log(`Opération de transfert..`);
-//     if (req.headers.op_code!='TYOP-008') return response(res, 403, `Type opération non authorisé !`);
-//     // Utils.selectTypeOperation('transfert').then(async op_code => {
-//     //     saveOparation('TYOP-008', req, res, next);
-//     // }).catch(err => response(res, 400, err));
-// };
+const opTransfert = async (req, res, next) => {
+    console.log(`Opération de transfert..`);
+    if (req.headers.op_code!='TYOP-008') return response(res, 403, `Type opération non authorisé !`);
+    // Utils.selectTypeOperation('transfert').then(async op_code => {
+    //     saveOparation('TYOP-008', req, res, next);
+    // }).catch(err => response(res, 400, err));
+};
 
 // async function saveAtsgoOperation(type, acteur_id, {apikey, idFcp, libelle, montant, res, next}) {
 
@@ -470,10 +482,12 @@ const getAllTypeOperations = async (req, res, next) => {
 
 module.exports = {
     getAllTypeOperations,
-    // getAllActeurOperations,
-    // opSouscription,
+    getOneOperation,
+    getAllActeurOperations,
+    opSouscription,
+    opRachat,
     // opSouscriptionCompleted,
-    // opRachat,
-    // opTransfert
+    opDepot,
+    opTransfert
     // saveOparation
 }

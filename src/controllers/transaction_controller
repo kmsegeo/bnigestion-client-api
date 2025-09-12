@@ -1,0 +1,22 @@
+const response = require('../middlewares/response');
+
+const getActeurTransactions = async (req, res, next) => {
+    try {
+        return response(res, 200, 'Liste des transactions de l\'acteur', []);
+    } catch (error) {
+        next(error);
+    }
+}
+
+const createTransaction = async (req, res, next) => { }
+const getTransactionById = async (req, res, next) => { }
+const updateTransaction = async (req, res, next) => { }
+const deleteTransaction = async (req, res, next) => { }
+
+module.exports = {
+    getActeurTransactions,
+    createTransaction,
+    getTransactionById,
+    updateTransaction,
+    deleteTransaction,
+}
