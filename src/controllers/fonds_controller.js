@@ -21,6 +21,7 @@ const getOneFonds = async (req, res, next) => {
         if (!fonds) return response(res, 404, "Fonds non trouvé", null);
         await ValeurLiquidative.findLastByFonds(fonds.r_code).then(vl => {
             fonds['vl'] = vl;
+            delete fonds.r_i;
             return response(res, 200, "Détails du fonds", fonds)
         }).catch(err=>next(err));
     }).catch(err => next(err));

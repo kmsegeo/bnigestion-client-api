@@ -27,6 +27,14 @@ const TypeOperation = {
         const row = result.rows[0];
         if (!row) return;
         return row['r_code'];
+    },
+
+    async findByIntitule(intitule) {
+        const queryStrind = `SELECT r_i, r_code, r_description, r_transaction  FROM ${this.tableName} WHERE r_intitule=$1`;
+        const result = await db.query(queryStrind, [intitule]);
+        const row = result.rows[0];
+        if (!row) return;
+        return row['r_code'];
     }
 }
 

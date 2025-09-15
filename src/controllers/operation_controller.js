@@ -1,5 +1,9 @@
 const response = require('../middlewares/response');
+const Acteur = require('../models/Acteur');
+const Fonds = require('../models/Fonds');
+const Operation = require('../models/Operation');
 const TypeOperation = require('../models/TypeOperation');
+const Utils = require('../utils/utils.methods');
 // const Operation = require("../models/Operation");
 // const Acteur = require("../models/Acteur");
 // const Session = require("../models/Session");
@@ -60,7 +64,32 @@ const getOneOperation = async (req, res, next) => {
 }
 
 const opDepot = async (req, res, next) => {
-    return response(res, 200, `Opération de dépôt en cours de traitement`, {});
+    
+    const acteurId = req.session.e_acteur;
+    const {fonds_code, montant, compte_paiement} = req.body;
+    
+    Utils.expectedParameters({fonds_code, montant, compte_paiement}).then(async () => {
+        
+        if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant !`, {montant});
+        const frais_operateur = Number(montant/100);
+        
+        await TypeOperation.findByIntitule('depot').then(async type_operation => {
+            await Fonds.findByCode(fonds_code).then(async fonds => {
+                await Operation.create(acteurId, type_operation.r_i, fonds.r_i, {
+                    reference_operateur: null, 
+                    libelle: "DEPOT - N° DE TRANSACTION: " + compte_paiement, 
+                    montant, 
+                    frais_operation: 0, 
+                    frais_operateur, 
+                    compte_paiement
+                }).then(async operation => {
+                    console.log("Approvisionnement de compte de depot");
+                    return response(res, 201, "Opération termné", operation);
+                }).catch(err => next(err));
+            }).catch(err => next(err));
+        }).catch(err => next(err));
+
+    }).catch(err => response(res, 400, err));
 }
 
 const opSouscription = async (req, res, next) => {

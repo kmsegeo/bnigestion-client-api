@@ -32,6 +32,7 @@ const Fonds = {
     async findByCode(code) {
         const res = db.query(`
             SELECT 
+                r_i,
                 r_code, 
                 r_intitule, 
                 r_description, 
