@@ -16,7 +16,6 @@ const getLastPortefeuilles = async (req, res, next) => {
     }
 }
 
-
 module.exports = {
     getLastPortefeuilles
 }

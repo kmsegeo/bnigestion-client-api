@@ -27,8 +27,22 @@ const getOneFonds = async (req, res, next) => {
     }).catch(err => next(err));
 }
 
+const getAllVlsByFonds = async (req, res, next) => { 
+    const code = req.params.code;
+    console.log("Récupération du fonds " + code + "...");
+    await Fonds.findByCode(code).then(async fonds => {
+        if (!fonds) return response(res, 404, "Fonds non trouvé", null);
+        await ValeurLiquidative.findAllByFonds(code).then(vls => {
+            fonds['vls'] = vls;
+            delete fonds.r_i;
+            return response(res, 200, "Détails du fonds", fonds)
+        }).catch(err=>next(err));
+    }).catch(err => next(err));
+}
+
 
 module.exports = {
     getAllFonds,
-    getOneFonds    
+    getOneFonds,
+    getAllVlsByFonds
 }

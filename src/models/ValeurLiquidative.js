@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const Fonds = require('./Fonds');
 
 const ValeurLiquidative = {
 
@@ -38,7 +39,7 @@ const ValeurLiquidative = {
             r_datevl, 
             r_description,
             r_valeur_precedente,
-            r_date_precedente FROM ${this.tableName} WHERE e_fonds=(SELECT r_i FROM t_fonds WHERE r_code=$1) AND r_statut=$2 ORDER BY r_datevl DESC LIMIT 1`, [fonds, 1]);
+            r_date_precedente FROM ${this.tableName} WHERE e_fonds=(SELECT r_i FROM ${Fonds.tableName} WHERE r_code=$1) AND r_statut=$2 ORDER BY r_datevl DESC LIMIT 1`, [fonds, 1]);
         return (await res).rows[0];
     },
 
@@ -48,7 +49,7 @@ const ValeurLiquidative = {
             r_datevl, 
             r_description,
             r_valeur_precedente,
-            r_date_precedente FROM ${this.tableName} WHERE e_fonds=$1 AND r_statut=$2 ORDER BY r_datevl DESC`, [fonds, 1]);
+            r_date_precedente FROM ${this.tableName} WHERE e_fonds=(SELECT r_i FROM ${Fonds.tableName} WHERE r_code=$1) AND r_statut=$2 ORDER BY r_datevl DESC`, [fonds, 1]);
         return (await res).rows;
     },
     

@@ -13,6 +13,7 @@ router.get('/type-operations', app_auth, session_verify, operationController.get
 
 router.get('/fonds', app_auth, session_verify, fondsController.getAllFonds);
 router.get('/fonds/:code', app_auth, session_verify, fondsController.getOneFonds);
+router.get('/fonds/:code/vls', app_auth, session_verify, fondsController.getAllVlsByFonds);
 
 
 module.exports = router;

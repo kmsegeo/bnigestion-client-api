@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const Canal = require('./Canal');
 const uuid = require('uuid');
 
 const Session = {
@@ -18,7 +19,7 @@ const Session = {
             r_statut,
             e_acteur,
             e_canal)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,(SELECT r_i FROM t_canal WHERE r_code=$10)) RETURNING *`;
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,(SELECT r_i FROM ${Canal.tableName} WHERE r_code=$10)) RETURNING *`;
         const date = new Date();
         const res = db.query(queryString, [uuid.v4(), date, date, os, adresse_ip, marque, model, 1, acteur, canal]);
         return (await res).rows[0];

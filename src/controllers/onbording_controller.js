@@ -5,6 +5,7 @@ const Acteur = require("../models/Acteur");
 const Client = require("../models/Client");
 const Message = require("../models/Message");
 const bcrypt = require("bcryptjs");
+const CompteDepots = require("../models/CompteDepot");
 
 
 const onbordingParticulier = async (req, res, next) => {
@@ -69,6 +70,8 @@ const onbordingParticulier = async (req, res, next) => {
                 }).then(async particulier => {
                     if (!particulier) return response(res, 400, `Une erreur s'est produite !`); 
                     // const data = DataFormat.replaceIndividualDataNumeriques(particulier); 
+                    console.log(`Creation du compte de dépôt`);
+                    await CompteDepots.create({acteur: acteur.r_i}).catch(err => console.log(err));
                     particulier['acteur'] = acteur;
                     return response(res, 201, `Compte particulier créé avec succès`, particulier); 
                 }).catch(error => next(error));

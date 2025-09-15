@@ -1,6 +1,6 @@
 const response = require('../middlewares/response');
 const Acteur = require('../models/Acteur');
-const Fonds = require('../models/Fonds');
+const CompteDepot = require('../models/CompteDepot');
 const Operation = require('../models/Operation');
 const TypeOperation = require('../models/TypeOperation');
 const Utils = require('../utils/utils.methods');
@@ -66,26 +66,55 @@ const getOneOperation = async (req, res, next) => {
 const opDepot = async (req, res, next) => {
     
     const acteurId = req.session.e_acteur;
-    const {fonds_code, montant, compte_paiement} = req.body;
+    const {montant, compte_paiement} = req.body;
     
-    Utils.expectedParameters({fonds_code, montant, compte_paiement}).then(async () => {
+    Utils.expectedParameters({montant, compte_paiement}).then(async () => {
         
         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant !`, {montant});
         const frais_operateur = Number(montant/100);
-        
+
+        /**
+         * Ecriture de la transaction, en attendant la confirmation de l'operateur (statut: 0 = en cours de traitement)
+         */
+
         await TypeOperation.findByIntitule('depot').then(async type_operation => {
-            await Fonds.findByCode(fonds_code).then(async fonds => {
-                await Operation.create(acteurId, type_operation.r_i, fonds.r_i, {
-                    reference_operateur: null, 
-                    libelle: "DEPOT - N° DE TRANSACTION: " + compte_paiement, 
-                    montant, 
-                    frais_operation: 0, 
-                    frais_operateur, 
-                    compte_paiement
-                }).then(async operation => {
-                    console.log("Approvisionnement de compte de depot");
-                    return response(res, 201, "Opération termné", operation);
+            await Operation.create(acteurId, type_operation.r_i, 0, {
+                reference_operateur: null, 
+                libelle: "DEPOT - N° DE TRANSACTION: " + compte_paiement, 
+                montant, 
+                frais_operation: 0, 
+                frais_operateur, 
+                compte_paiement
+            }).then(async operation => {
+                console.log("Approvisionnement de compte de depot");
+                
+                /**
+                 * - Exécution de la transaction coté operateur, 
+                 * - Suivi de la modification du statut par webhook (statut: 1 = ok et 2 = rejeté),
+                 * - Avec impact sur le compte de depot.
+                 */
+
+                //--- à supprimer plutard ----------------------------------------------------------
+                
+                console.log(`Mise à jour du compte de dépôt`);
+                
+                await CompteDepot.findByActeur(acteurId).then(async compte => {
+                    if (!compte) return response(res, 404, `Compte de dépôt inexistant`);
+                    console.log(`Début du dépôt sur compte de dépôt`);
+                    const solde_disponible = compte.r_solde_disponible ? compte.r_solde_disponible : 0;
+                    const newMontant = Number(solde_disponible) + Number(operation.r_montant);
+                    console.log('solde disponible:', solde_disponible)
+                    console.log('montant operation:', operation.r_montant)
+                    await CompteDepot.update(acteurId, {montant: newMontant}).then(async result => {
+                        await Operation.updateSuccess(operation.r_reference).catch(err => next(err));
+                        console.log(`Dépôt sur le compte termné`);
+                        console.log('nouveau solde:', result.r_solde_disponible);
+                        return response(res, 201, "Opération termné", operation);
+                    }).catch(err => console.log(err));
                 }).catch(err => next(err));
+
+                //----------------------- ----------------------------------------------------------
+
             }).catch(err => next(err));
         }).catch(err => next(err));
 
