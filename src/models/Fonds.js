@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 const Fonds = {
 
-    tableName: 't_fonds',
+    tableName: '_sc_gestion.t_fonds',
     codePrefix: 'FCP',
     codeColumn: 'r_code',
 

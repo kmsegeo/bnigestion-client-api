@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 const ValeurLiquidative = {
 
-    tableName: 't_val_liquidative',
+    tableName: '_sc_gestion.t_val_liquidative',
 
     // async findAllBetween2Date(from, to) {
         

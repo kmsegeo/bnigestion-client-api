@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 const Canal = {
     
-    tableName: `t_canal`,
+    tableName: `_sc_auth.t_canal`,
     code_colunm: `r_code`,
     code_prefix: `CANAL`,
 

@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 const Message = {
 
-    tableName: "t_msg",
+    tableName: "_sc_gestion.t_msg",
 
     // async findLastInput() {
     //     const res = await db.query(`SELECT * FROM ${this.tableName} ORDER BY r_i DESC LIMIT 1`, []);

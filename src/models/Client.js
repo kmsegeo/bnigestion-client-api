@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 const TypeActeur = {
     
-    table_name: 't_type_acteur',
+    table_name: '_sc_auth.t_type_acteur',
 
     async findAll() {
         const query_string = `SELECT r_code, r_intitule, r_description FROM ${this.table_name}`;
@@ -19,7 +19,7 @@ const TypeActeur = {
 
 const Particulier = {
 
-    table_name: 't_particulier',
+    table_name: '_sc_auth.t_particulier',
 
     async create({
             civilite, 
@@ -114,7 +114,7 @@ const Particulier = {
 
 const Entreprise = {
 
-    table_name: 't_entreprise',
+    table_name: '_sc_auth.t_entreprise',
 
     async create({raison_sociale, forme_juridique, capital_social, siege_social, compte_contribuable, registre_com, compte_titre, compte_espece}) {
         

@@ -3,7 +3,7 @@ const uuid = require('uuid');
 
 const Session = {
 
-    tableName: 't_session',
+    tableName: '_sc_auth.t_session',
 
     async create({os, adresse_ip, marque, model, acteur, canal}) {
 

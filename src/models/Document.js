@@ -3,7 +3,7 @@ const uuid = require('uuid');
 
 const Document = {
 
-    tableName: 't_document',
+    tableName: '_sc_gestion.t_document',
 
     async findAll() {
         const res = await db.query(`

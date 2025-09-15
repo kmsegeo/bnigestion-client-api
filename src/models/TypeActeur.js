@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 const TypeActeur = {
 
-    tableName: `t_type_acteur`,
+    tableName: `_sc_auth.t_type_acteur`,
 
     async findAll() {
         const queryString = `

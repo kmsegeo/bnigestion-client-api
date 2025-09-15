@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 const Acteur = {  
 
-  tableName: 't_acteur',
+  tableName: '_sc_auth.t_acteur',
 
   async create({nom_complet, email, telephone, adresse, type_acteur}) {
     

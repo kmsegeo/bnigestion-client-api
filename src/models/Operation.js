@@ -4,7 +4,7 @@ const uuid = require('uuid');
 
 const Operation = {
 
-    table_name: 't_operation',
+    table_name: '_sc_gestion.t_operation',
     
     async findAllByActeur(id) {
         const res = await db.query(`SELECT * FROM ${this.table_name} WHERE e_acteur=$1`, [id]);
