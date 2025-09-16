@@ -7,7 +7,10 @@ const getAllFonds = async (req, res, next) => {
     await Fonds.findAll().then(async fonds => {
         for (let f of fonds) {
             await ValeurLiquidative.findLastByFonds(f.r_code).then(vl => {
-                f['vl'] = vl;
+                f["r_valeur_liquidative"] = vl.r_valeur_courante,
+                f["r_datevl"] = vl.r_datevl,
+                f["r_valeur_precedente"] = vl.r_valeur_precedente,
+                f["r_date_precedente"] = vl.r_date_precedente
             }).catch(err=>next(err));
         }
         return response(res, 200, "Liste des fonds", fonds)
@@ -20,7 +23,10 @@ const getOneFonds = async (req, res, next) => {
     await Fonds.findByCode(code).then(async fonds => {
         if (!fonds) return response(res, 404, "Fonds non trouvé", null);
         await ValeurLiquidative.findLastByFonds(fonds.r_code).then(vl => {
-            fonds['vl'] = vl;
+            fonds["r_valeur_liquidative"] = vl.r_valeur_courante,
+            fonds["r_datevl"] = vl.r_datevl,
+            fonds["r_valeur_precedente"] = vl.r_valeur_precedente,
+            fonds["r_date_precedente"] = vl.r_date_precedente
             delete fonds.r_i;
             return response(res, 200, "Détails du fonds", fonds)
         }).catch(err=>next(err));

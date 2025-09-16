@@ -9,7 +9,7 @@ const fondsController = require('../controllers/fonds_controller');
 router.get('/langues', app_auth, clientRsrcController.getLanguePreferee);
 
 router.get('/type-acteurs', app_auth, clientRsrcController.getAllTypeActeurs);
-router.get('/type-operations', app_auth, session_verify, operationController.getAllTypeOperations);
+router.get('/type-operations', app_auth, operationController.getAllTypeOperations);
 
 router.get('/fonds', app_auth, session_verify, fondsController.getAllFonds);
 router.get('/fonds/:code', app_auth, session_verify, fondsController.getOneFonds);

@@ -68,10 +68,7 @@ const onbordingParticulier = async (req, res, next) => {
                     validite_piece,
                     e_acteur: acteur.r_i
                 }).then(async particulier => {
-                    if (!particulier) return response(res, 400, `Une erreur s'est produite !`); 
-                    // const data = DataFormat.replaceIndividualDataNumeriques(particulier); 
-                    console.log(`Creation du compte de dépôt`);
-                    await CompteDepots.create({acteur: acteur.r_i}).catch(err => console.log(err));
+                    if (!particulier) return response(res, 400, `Une erreur s'est produite !`);
                     particulier['acteur'] = acteur;
                     return response(res, 201, `Compte particulier créé avec succès`, particulier); 
                 }).catch(error => next(error));

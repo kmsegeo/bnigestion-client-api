@@ -1,8 +1,12 @@
 const response = require('../middlewares/response');
 const Acteur = require('../models/Acteur');
+const { Particulier } = require('../models/Client');
 const CompteDepot = require('../models/CompteDepot');
+const Fonds = require('../models/Fonds');
 const Operation = require('../models/Operation');
+const Portefeuille = require('../models/Portefeuille');
 const TypeOperation = require('../models/TypeOperation');
+const ValeurLiquidative = require('../models/ValeurLiquidative');
 const Utils = require('../utils/utils.methods');
 // const Operation = require("../models/Operation");
 // const Acteur = require("../models/Acteur");
@@ -21,41 +25,11 @@ const getAllTypeOperations = async (req, res, next) => {
 }
 
 const getAllActeurOperations = async (req, res, next) => {
-
-
-    return response(res, 200, `Chargement de l'historique des opérations`, []);
-
-//     console.log('Chargement de l\'historique des opération...')
-//     if (req.headers.op_code!='TYOP-003') return response(res, 403, `Type opération non authorisé !`); 
-
-//     const apikey = req.apikey.r_valeur;
-//     // const date = new Date().getFullYear() + '-'  + new Date().getMonth() + '-' + new Date().getDate();
-
-//     console.log(`Recupération des données client`)
-//     await Acteur.findById(req.session.e_acteur).then(async acteur => {
-//         await Particulier.findById(acteur.e_particulier).then(async particulier => {
-            
-//             // const idClient = particulier.r_ncompte_titre;
-//             const idClient = particulier.r_atsgo_id_client;
-
-//             const url = process.env.ATSGO_URL + process.env.URI_CLIENT_OPERATIONS + '?ApiKey=' + apikey + '&IdClient=' + idClient;
-//             console.log(url);
-
-//             await fetch(url)
-//             .then(async res => res.json())
-//             .then(async data => {
-//                 if (data.status!=200) return response(res, 403, `Une erreur lors de la récupération des opération !`);
-
-//                 for(let payLoad of data.payLoad) {
-//                     delete payLoad.idClient;
-//                     // delete payLoad.etat;
-//                 }
-
-//                 return response(res, 200, 'Chargement de l\'historique terminé', data.payLoad);
-//             }).catch(err => next(err));
-//         }).catch(err => next(err));
-//     }).catch(err => next(err));
-    
+    console.log(`Chargement des opérations..`);
+    const acteurId = req.session.e_acteur;
+    await Operation.findAllByActeurId(acteurId).then(async operations => {
+        return response(res, 200, `Liste des opérations`, operations);
+    }).catch(err => next(err));
 }
 
 const getOneOperation = async (req, res, next) => { 
@@ -66,9 +40,9 @@ const getOneOperation = async (req, res, next) => {
 const opDepot = async (req, res, next) => {
     
     const acteurId = req.session.e_acteur;
-    const {montant, compte_paiement} = req.body;
+    const {montant, mobile_payeur, callback_erreur, callback_succes} = req.body;
     
-    Utils.expectedParameters({montant, compte_paiement}).then(async () => {
+    Utils.expectedParameters({montant, mobile_payeur, callback_erreur, callback_succes}).then(async () => {
         
         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant !`, {montant});
         const frais_operateur = Number(montant/100);
@@ -80,11 +54,11 @@ const opDepot = async (req, res, next) => {
         await TypeOperation.findByIntitule('depot').then(async type_operation => {
             await Operation.create(acteurId, type_operation.r_i, 0, {
                 reference_operateur: null, 
-                libelle: "DEPOT - N° DE TRANSACTION: " + compte_paiement, 
+                libelle: "DEPOT - N° DE TRANSACTION: " + mobile_payeur, 
                 montant, 
                 frais_operation: 0, 
                 frais_operateur, 
-                compte_paiement
+                compte_paiement: mobile_payeur
             }).then(async operation => {
                 console.log("Approvisionnement de compte de depot");
                 
@@ -98,7 +72,7 @@ const opDepot = async (req, res, next) => {
                 
                 console.log(`Mise à jour du compte de dépôt`);
                 
-                await CompteDepot.findByActeur(acteurId).then(async compte => {
+                await CompteDepot.findByActeurId(acteurId).then(async compte => {
                     if (!compte) return response(res, 404, `Compte de dépôt inexistant`);
                     console.log(`Début du dépôt sur compte de dépôt`);
                     const solde_disponible = compte.r_solde_disponible ? compte.r_solde_disponible : 0;
@@ -124,86 +98,58 @@ const opDepot = async (req, res, next) => {
 const opSouscription = async (req, res, next) => {
     
     console.log(`Opération de souscription..`);
-
-    const op_code = 'TYOP-006';
-    const moyen_paiement = 'TMOP-003';
-
-    if (req.headers.op_code!=op_code) return response(res, 403, `Type opération non authorisé !`);
     
-    const apikey = req.apikey.r_valeur;
-    const {idFcp, montant, mobile_payeur, callback_erreur, callback_succes} = req.body;
-    const acteur_id = req.session.e_acteur;
+    const acteurId = req.session.e_acteur;
+    const {fonds_code, montant} = req.body;
 
-    Utils.expectedParameters({idFcp, montant}).then(async () => {
+    Utils.expectedParameters({fonds_code, montant}).then(async () => {
 
         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant de soucription !`, {montant});
+        console.log(`Vérification de la valleur liquidative du fonds`);
 
-        const frais_operateur = Number(montant/100);
+        await ValeurLiquidative.findLastByFonds(fonds_code).then(async vl => {
+            if (!vl) return response(res, 404, `Une erreur lors de la récupération de la VL !`);
 
-        console.log(`Vérification de la valleur liquidative du fonds`)
-        const fonds_url = `${process.env.ATSGO_URL + process.env.URI_FONDS}?ApiKey=${apikey}`;
-        console.log(fonds_url);
+            if (Number(montant) < Number(vl.r_valeur_courante))
+                return response(res, 400, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
 
-        await fetch(fonds_url).then(async res => res.json()).then(async data => {
-            if (data.status!=200) return response(res, 403, `Une erreur lors de la récupération des fonds !`);
-            
-            let fonds = null;
+            console.log(`Recupération des données client`);
 
-            for (let f of data.payLoad) 
-                if (f.idFcp==idFcp) fonds = f;
-
-            if (!fonds)
-                return response(res, 404, `Fonds introuvable !`);
-
-            if (Number(montant) < Number(fonds.vl))
-                return response(res, 403, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
-                
-            console.log(`Recupération des données client`)
-            await Acteur.findById(acteur_id).then(async acteur => {
-                await Particulier.findById(acteur.e_particulier).then(async particulier => {
-                    
-                    const idClient = particulier.r_atsgo_id_client;
-
-                    await TypeOperation.findByCode(op_code).then(async type_operation => {
-                        if(!type_operation) return response(res, 404, `Type opération non trouvé !`);
-
-                            console.log(`Initialisation de paiement wave`);
-                            const op_ref = uuid.v4();
-
-                            await Wave.checkout(montant, frais_operateur, mobile_payeur, callback_erreur, callback_succes, op_ref, async data => {
-                        
-                                await Operation.create(acteur_id, type_operation.r_i, 0, idFcp, op_ref, { 
-                                    reference_operateur: data.id, 
-                                    libelle: 'SOUSCRIPTION FCP BRIDGE - N° DE TRANSACTION: ' + mobile_payeur, 
+            await Particulier.findByActeurId(acteurId).then(async particulier => {
+                if (!particulier) return response(res, 404, `Le compte utilisateur n'existe pas !`);
+                if (!particulier.r_ncompte_titre) return response(res, 400, `Ce compte ne dispose de pas de compte titre !`);
+                await TypeOperation.findByIntitule(`souscription`).then(async type_operation => {
+                    if(!type_operation) return response(res, 404, `Type opération non trouvé !`);                      
+                    await CompteDepot.findByActeurId(acteurId).then(async compte => {
+                        if (!compte) return response(res, 404, `Le compte de dépôt est inexistant !`);
+                        const solde_disponible = compte.r_solde_disponible;
+                        if (Number(solde_disponible) < Number(montant)) return response(res, 400, `Le solde est dispobible est inférieur au montant de souscrition`);
+                        const newMontant = Number(solde_disponible) - Number(montant);
+                        await CompteDepot.update(acteurId, {montant: newMontant}).then(async newCompte => {
+                            await Fonds.findByCode(fonds_code).then(async fonds => {
+                            if (!fonds) return response(res, 404, `Le fonds désigné est indisponible !`);
+                                await Operation.create(acteurId, type_operation.r_i, fonds.r_i, {
+                                    reference_operateur: null, 
+                                    libelle: "SOUSCRIPTION - N° DE TRANSACTION: " + particulier.r_ncompte_titre, 
                                     montant: montant, 
-                                    frais_operateur: frais_operateur, 
-                                    frais_operation: null, 
-                                    compte_paiement: idClient
+                                    frais_operation: 0, 
+                                    frais_operateur: 0, 
+                                    compte_paiement: particulier.r_ncompte_titre
                                 }).then(async operation => {
-
-                                    if (!operation) return response(res, 400, `Initialisation de paiement échoué !`);
-
-                                    let transfert_data = {
-                                        reference_operation: operation.r_reference,
-                                        ref_wave: data.id,
-                                        montant: data.amount,
-                                        devise: data.currency,
-                                        paiement_url: data.wave_launch_url,
-                                        date_creation: data.when_created,
-                                        date_expire: data.when_expires
-                                    }
-
-                                    const notification = `Souscription:\nRef.Wave: ${data.id}\nMontant: ${data.amount} ${data.currency}.\nConfirmez: ${data.wave_launch_url}`;
-                                    await Utils.sendNotificationSMS(acteur_id, mobile_payeur, notification, 3, () => {});
-                                    
-                                    return response(res, 200, `Initialisation de paiement réussi`, transfert_data);
-
-                                }).catch(err => next(err));
+                                    if (!operation) return response(res, 400, `Une erreur s'est produite lors de la souscription !`);
+                                    const part = 0;
+                                    const cour = 0;
+                                    const cmp = 0;
+                                    await Portefeuille.createPortefeuille()
+                                    return response(res, 201, `Soucription terminé`, operation);
+                                }).catch(err => next(err))
                             }).catch(err => next(err));
+                        }).catch(err => next(err));
                     }).catch(err => next(err));
                 }).catch(err => next(err));
             }).catch(err => next(err));
-        }).catch(err => next(err)); 
+
+        }).catch(err => next(err));                   
     }).catch(err => response(res, 400, err));
 
 };

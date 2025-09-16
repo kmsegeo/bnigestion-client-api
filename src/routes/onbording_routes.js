@@ -19,5 +19,4 @@ router.post('/acteurs/:acteurId/motdepasse/activer', app_auth, onbordingControll
 router.get('/acteurs/:acteurId/otp/renvoyer', app_auth, onbordingController.renvoiOtp);
 router.post('/acteurs/:acteurId/otp/verifier', app_auth, onbordingController.verifierOtp);
 
-
 module.exports = router;

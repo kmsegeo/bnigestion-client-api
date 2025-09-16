@@ -25,7 +25,7 @@ const ValeurLiquidative = {
 
     async findById(id) {
         const res = db.query(`SELECT 
-            r_valeur, 
+            r_valeur_courante, 
             r_datevl, 
             r_description,
             r_valeur_precedente,
@@ -35,7 +35,7 @@ const ValeurLiquidative = {
 
     async findLastByFonds(fonds) {
         const res = db.query(`SELECT 
-            r_valeur, 
+            r_valeur_courante, 
             r_datevl, 
             r_description,
             r_valeur_precedente,
@@ -45,7 +45,7 @@ const ValeurLiquidative = {
 
     async findAllByFonds(fonds) {
         const res = db.query(`SELECT 
-            r_valeur, 
+            r_valeur_courante, 
             r_datevl, 
             r_description,
             r_valeur_precedente,
@@ -56,7 +56,7 @@ const ValeurLiquidative = {
     async update(id, fonds, {valeur, datevl, description, valeur_precedente, date_precedente}) {
         const res = db.query(`
             UPDATE ${this.tableName} 
-            SET r_valeur=$1,
+            SET r_valeur_courante=$1,
                 r_datevl=$2,
                 r_description=$3,
                 r_valeur_precedente=$4

@@ -6,8 +6,8 @@ const Operation = {
 
     table_name: '_sc_gestion.t_operation',
     
-    async findAllByActeur(id) {
-        const res = await db.query(`SELECT * FROM ${this.table_name} WHERE e_acteur=$1`, [id]);
+    async findAllByActeurId(id) {
+        const res = await db.query(`SELECT * FROM ${this.table_name} WHERE e_acteur=$1 ORDER BY r_i DESC`, [id]);
         return res.rows;
     },
 

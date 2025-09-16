@@ -11,8 +11,8 @@ const Fonds = {
             r_code, 
             r_intitule, 
             r_description, 
-            commission_souscription, 
-            commission_sortie FROM ${this.tableName} WHERE r_statut=$1`, [1]);
+            r_commission_souscription, 
+            r_commission_sortie FROM ${this.tableName} WHERE r_statut=$1`, [1]);
         return (await res).rows;
     },
 
@@ -22,8 +22,8 @@ const Fonds = {
                 r_code, 
                 r_intitule, 
                 r_description, 
-                commission_souscription, 
-                commission_sortie
+                r_commission_souscription, 
+                r_commission_sortie
             FROM ${this.tableName}
             WHERE r_i=$1 AND r_statut=$2`, [id, 1]);
         return (await res).rows[0];
@@ -36,8 +36,8 @@ const Fonds = {
                 r_code, 
                 r_intitule, 
                 r_description, 
-                commission_souscription, 
-                commission_sortie
+                r_commission_souscription, 
+                r_commission_sortie
             FROM ${this.tableName}
             WHERE r_code=$1 AND r_statut=$2`, [code, 1]);
         return (await res).rows[0];
@@ -49,8 +49,8 @@ const Fonds = {
                 r_code, 
                 r_intitule, 
                 r_description, 
-                commission_souscription, 
-                commission_sortie
+                r_commission_souscription, 
+                r_commission_sortie
             FROM ${this.tableName}
             WHERE r_intitule=$1 AND r_statut=$2`, [intitule, 1]);
         return (await res).rows[0];
