@@ -810,49 +810,6 @@
         }
       }
     },
-    "/v1/acteurs/operations/{ref}": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "appauth",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "app_id",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "op_code",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "timestamp",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": ""
-          }
-        }
-      }
-    },
     "/v1/acteurs/operations/depot": {
       "post": {
         "description": "",
@@ -1037,6 +994,43 @@
         }
       }
     },
+    "/v1/acteurs/comptedepot/": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "appauth",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "app_id",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "op_code",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/v1/acteurs/portefeuilles/": {
       "get": {
         "description": "",
@@ -1074,42 +1068,7 @@
         }
       }
     },
-    "/v1/acteurs/compte_depot/": {
-      "patch": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "appauth",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "app_id",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "op_code",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "timestamp",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": ""
-          }
-        }
-      },
+    "/v1/acteurs/portefeuilles/actifs": {
       "get": {
         "description": "",
         "parameters": [
