@@ -14,7 +14,7 @@ router.post('/acteurs/particulier', app_auth, onbordingController.onbordingParti
 // router.post('/particulier/:particulierId/personne_contacter', app_auth, onbordingController.createPersonEmergency);
 // router.get('/particulier/:particulierId/personne_contacter', app_auth, onbordingController.getAllPersonEmergency);
 
-router.post('/acteurs/:acteurId/motdepasse/activer', app_auth, onbordingController.createPassword);
+// router.post('/acteurs/:acteurId/motdepasse/activer', app_auth, onbordingController.createPassword);
 
 router.get('/acteurs/:acteurId/otp/renvoyer', app_auth, onbordingController.renvoiOtp);
 router.post('/acteurs/:acteurId/otp/verifier', app_auth, onbordingController.verifierOtp);
