@@ -295,14 +295,17 @@
                 },
                 "adresse": {
                   "example": "any"
+                },
+                "mdp": {
+                  "example": "any"
                 }
               }
             }
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "OK"
           }
         }
       }
