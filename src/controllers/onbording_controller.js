@@ -32,10 +32,11 @@ const onbordingParticulier = async (req, res, next) => {
         validite_piece, 
         email, 
         telephone, 
-        adresse} = req.body;
+        adresse,
+        mdp} = req.body;
 
     console.log(`Vérification des paramètres`);
-    await Utils.expectedParameters({civilite, nom, prenom, date_naissance, email, telephone}).then(async () => {
+    await Utils.expectedParameters({civilite, nom, prenom, date_naissance, email, telephone, mdp}).then(async () => {
         
         console.log(`Vérification de l'existance du compte`);
         await Acteur.findByEmail(email).then(async exists_email => {
@@ -47,32 +48,65 @@ const onbordingParticulier = async (req, res, next) => {
         console.log(`Récupération de l'id du type acteur`);
         await TypeActeur.findByCode("TYAC002").then(async type_acteur => {
             if (!type_acteur) return response(res, 400, `Problème survenu lors de la determination du type acteur`);
+            await bcrypt.hash(mdp, 10).then(async hash => {
+                console.log(hash);
+                await Acteur.create({
+                    nom_complet: nom + ' ' + prenom, 
+                    email: email, 
+                    telephone: telephone, 
+                    adresse: adresse, 
+                    type_acteur: type_acteur.r_i,
+                    mdp: hash
+                }).then(async acteur => { 
+                    console.log(`Création du compte particulier`);
+                    await Client.Particulier.create({
+                        civilite, 
+                        nom, 
+                        nom_jeune_fille, 
+                        prenom, 
+                        date_naissance, 
+                        nationalite, 
+                        type_piece, 
+                        numero_piece, 
+                        validite_piece,
+                        e_acteur: acteur.r_i
+                    }).then(async particulier => {
+                        if (!particulier) return response(res, 400, `Une erreur s'est produite !`);
 
-            await Acteur.create({
-                nom_complet: nom + ' ' + prenom, 
-                email: email, 
-                telephone: telephone, 
-                adresse: adresse, 
-                type_acteur: type_acteur.r_i,
-            }).then(async acteur => { 
-                console.log(`Création du compte particulier`);
-                await Client.Particulier.create({
-                    civilite, 
-                    nom, 
-                    nom_jeune_fille, 
-                    prenom, 
-                    date_naissance, 
-                    nationalite, 
-                    type_piece, 
-                    numero_piece, 
-                    validite_piece,
-                    e_acteur: acteur.r_i
-                }).then(async particulier => {
-                    if (!particulier) return response(res, 400, `Une erreur s'est produite !`);
-                    particulier['acteur'] = acteur;
-                    return response(res, 201, `Compte particulier créé avec succès`, particulier); 
+                        await Message.clean(acteur.r_i).catch(err => next(err)); 
+
+                        await Utils.aleatoireOTP().then(async otp => {
+                            await Utils.genearte_msgid().then(async msgid => {
+                                await Message.create(acteur.r_i, {msgid, type:1, contenu:otp, operation: 1}).then(async message => { 
+                                    console.log('otp généré:', otp);
+                                    console.log('Envoi de message:', msgid, '..');
+                                    await fetch(process.env.ML_SMSCI_URL, {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                            identify: process.env.ML_SMS_ID,
+                                            pwd: process.env.ML_SMS_PWD,
+                                            fromad: "BNI CI",
+                                            toad: acteur.r_telephone_prp,
+                                            msgid: msgid,
+                                            text: `Votre code de vérification est : ${message.r_contenu}`
+                                        })
+                                    }).then(res => res.json()).then(data => {
+                                        if (data!=1) return response(res, 200, `Envoi de message echoué`, data);
+                                        // return response(res, 200, `Message de vérification envoyé`);
+                                        console.log(`Message de vérification envoyé`);
+                                        particulier['acteur'] = acteur;
+                                        return response(res, 201, `Compte particulier créé avec succès`, particulier); 
+                                    }).catch(err => next(err)); 
+                                }).catch(err => next(err)); 
+                            }).catch(err => next(err));
+                        }).catch(err => next(err));
+
+                    }).catch(error => next(error));
                 }).catch(error => next(error));
-            }).catch(error => next(error));
+                }).catch(err => next(err));
         }).catch(error => next(error));
         }).catch(error => next(error));
         }).catch(error => next(error));
