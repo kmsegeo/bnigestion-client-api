@@ -35,9 +35,8 @@ app.use(base_path + '/acteurs/sessions', sessionRoutes);
 app.use(base_path + '/acteurs/motdepasse', motdepasseRoutes);
 
 app.use(base_path + '/acteurs/operations', operationRoutes);
+app.use(base_path + '/acteurs/comptedepot', comptedepotRoutes);
 app.use(base_path + '/acteurs/portefeuilles', portefeuilleRoutes);
-
-app.use(base_path + '/acteurs/compte_depot', comptedepotRoutes);
 app.use(base_path + '/acteurs/sommaire', sommaireRoutes);
 
 app.use(base_path + '/webhooks', webhookRoutes); 

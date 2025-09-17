@@ -12,6 +12,15 @@ const TypeOperation = {
         return (await res).rows;
     },
 
+    async findById(id) {
+        const queryString = `
+            SELECT r_intitule, r_description, r_transaction 
+            FROM ${this.tableName} 
+            WHERE r_i=$1 AND r_statut=$2`;
+        const res = db.query(queryString, [id, 1]);
+        return (await res).rows[0];
+    },
+
     async findByCode(code) {
         const queryString = `
             SELECT r_i, r_intitule, r_description, r_transaction 
@@ -29,7 +38,7 @@ const TypeOperation = {
 
     async findByIntitule(intitule) {
         const queryStrind = `
-        SELECT r_i, r_code, r_description, r_transaction 
+        SELECT r_i, r_code, r_intitule, r_description, r_transaction 
             FROM ${this.tableName} 
             WHERE r_intitule=$1 AND r_statut=$2`;
         const result = await db.query(queryStrind, [intitule, 1]);

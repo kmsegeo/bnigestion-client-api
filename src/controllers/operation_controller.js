@@ -28,13 +28,16 @@ const getAllActeurOperations = async (req, res, next) => {
     console.log(`Chargement des opérations..`);
     const acteurId = req.session.e_acteur;
     await Operation.findAllByActeurId(acteurId).then(async operations => {
+        for(let op of operations) {
+            await TypeOperation.findById(op.e_type_operation).then(async top => {
+                op['r_type_operation'] = top.r_intitule;
+                delete op.r_i
+                delete op.e_acteur
+                delete op.e_type_operation
+            })
+        }
         return response(res, 200, `Liste des opérations`, operations);
     }).catch(err => next(err));
-}
-
-const getOneOperation = async (req, res, next) => { 
-    const {ref} = req.params.ref;
-    if (!ref) return response(res, 400, `Référence de l'opération est obligatoire !`, {ref});
 }
 
 const opDepot = async (req, res, next) => {
@@ -46,22 +49,28 @@ const opDepot = async (req, res, next) => {
         
         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant !`, {montant});
         const frais_operateur = Number(montant/100);
-
+        const nv_montant = Number(montant) - frais_operateur;
         /**
          * Ecriture de la transaction, en attendant la confirmation de l'operateur (statut: 0 = en cours de traitement)
          */
 
         await TypeOperation.findByIntitule('depot').then(async type_operation => {
-            await Operation.create(acteurId, type_operation.r_i, 0, {
+            await Operation.create(acteurId, type_operation.r_i, {
                 reference_operateur: null, 
                 libelle: "DEPOT - N° DE TRANSACTION: " + mobile_payeur, 
-                montant, 
+                montant: nv_montant, 
                 frais_operation: 0, 
-                frais_operateur, 
+                frais_operateur: frais_operateur, 
                 compte_paiement: mobile_payeur
             }).then(async operation => {
                 console.log("Approvisionnement de compte de depot");
                 
+                operation['r_type_operation'] = type_operation.r_intitule;
+                delete operation.r_i;
+                delete operation.e_acteur;
+                delete operation.e_type_operation;
+                delete operation.r_date_modif;
+
                 /**
                  * - Exécution de la transaction coté operateur, 
                  * - Suivi de la modification du statut par webhook (statut: 1 = ok et 2 = rejeté),
@@ -79,7 +88,7 @@ const opDepot = async (req, res, next) => {
                     const newMontant = Number(solde_disponible) + Number(operation.r_montant);
                     console.log('solde disponible:', solde_disponible)
                     console.log('montant operation:', operation.r_montant)
-                    await CompteDepot.update(acteurId, {montant: newMontant}).then(async result => {
+                    await CompteDepot.mouvement(acteurId, {montant: newMontant}).then(async result => {
                         await Operation.updateSuccess(operation.r_reference).catch(err => next(err));
                         console.log(`Dépôt sur le compte termné`);
                         console.log('nouveau solde:', result.r_solde_disponible);
@@ -103,52 +112,61 @@ const opSouscription = async (req, res, next) => {
     const {fonds_code, montant} = req.body;
 
     Utils.expectedParameters({fonds_code, montant}).then(async () => {
-
         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant de soucription !`, {montant});
-        console.log(`Vérification de la valleur liquidative du fonds`);
-
-        await ValeurLiquidative.findLastByFonds(fonds_code).then(async vl => {
-            if (!vl) return response(res, 404, `Une erreur lors de la récupération de la VL !`);
-
-            if (Number(montant) < Number(vl.r_valeur_courante))
-                return response(res, 400, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
-
-            console.log(`Recupération des données client`);
-
-            await Particulier.findByActeurId(acteurId).then(async particulier => {
-                if (!particulier) return response(res, 404, `Le compte utilisateur n'existe pas !`);
-                if (!particulier.r_ncompte_titre) return response(res, 400, `Ce compte ne dispose de pas de compte titre !`);
-                await TypeOperation.findByIntitule(`souscription`).then(async type_operation => {
-                    if(!type_operation) return response(res, 404, `Type opération non trouvé !`);                      
-                    await CompteDepot.findByActeurId(acteurId).then(async compte => {
-                        if (!compte) return response(res, 404, `Le compte de dépôt est inexistant !`);
-                        const solde_disponible = compte.r_solde_disponible;
-                        if (Number(solde_disponible) < Number(montant)) return response(res, 400, `Le solde est dispobible est inférieur au montant de souscrition`);
-                        const newMontant = Number(solde_disponible) - Number(montant);
-                        await CompteDepot.update(acteurId, {montant: newMontant}).then(async newCompte => {
-                            await Fonds.findByCode(fonds_code).then(async fonds => {
-                            if (!fonds) return response(res, 404, `Le fonds désigné est indisponible !`);
-                                await Operation.create(acteurId, type_operation.r_i, fonds.r_i, {
+        await Fonds.findByCode(fonds_code).then(async fonds => {
+            if (!fonds) return response(res, 404, `Fonds indisponible !`);
+            console.log(`Vérification de la valeur liquidative du fonds`);
+            await ValeurLiquidative.findLastByFonds(fonds_code).then(async vl => {
+                if (!vl) return response(res, 404, `Valeur liquidative indisponible !`)
+                if (Number(montant) < Number(vl.r_valeur_courante)) return response(res, 400, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
+                console.log(`Récupération des données utilisateur`);
+                await Particulier.findByActeurId(acteurId).then(async particulier => {
+                    if (!particulier) return response(res, 404, `Le compte utilisateur n'existe pas !`);
+                    if (!particulier.r_ncompte_titre) return response(res, 400, `Ce compte n'est pas valide !`);
+                    console.log(`Recherche du type d'opération`);
+                    await TypeOperation.findByIntitule(`souscription`).then(async type_operation => {
+                        if(!type_operation) return response(res, 404, `Type opération non trouvé !`);  
+                        console.log(`Vérification du solde du compte de dépôt`);                    
+                        await CompteDepot.findByActeurId(acteurId).then(async compte => {
+                            if (!compte) return response(res, 404, `Le compte de dépôt est inexistant !`);
+                            const solde_disponible = compte.r_solde_disponible;
+                            if (Number(solde_disponible) < Number(montant)) return response(res, 400, `Le solde est dispobible est inférieur au montant de souscrition`);
+                            const newMontant = Number(solde_disponible) - Number(montant);
+                            console.log(`Débit du montant sur le compte de dépôt`);
+                            await CompteDepot.mouvement(acteurId, {montant: newMontant}).then(async newCompte => {
+                                console.log(`Enregistrement de l'opération`);
+                                const commission = fonds.r_commission_souscription ? fonds.r_commission_souscription : 0;
+                                await Operation.create(acteurId, type_operation.r_i, {
                                     reference_operateur: null, 
                                     libelle: "SOUSCRIPTION - N° DE TRANSACTION: " + particulier.r_ncompte_titre, 
                                     montant: montant, 
-                                    frais_operation: 0, 
+                                    frais_operation: commission, 
                                     frais_operateur: 0, 
-                                    compte_paiement: particulier.r_ncompte_titre
+                                    compte_paiement: particulier.r_ncompte_titre 
                                 }).then(async operation => {
                                     if (!operation) return response(res, 400, `Une erreur s'est produite lors de la souscription !`);
-                                    const part = 0;
-                                    const cour = 0;
-                                    const cmp = 0;
-                                    await Portefeuille.createPortefeuille()
-                                    return response(res, 201, `Soucription terminé`, operation);
-                                }).catch(err => next(err))
+                                    const cour = vl.r_valeur_courante;
+                                    const part = (Number(operation.r_montant) - Number(operation.r_frais_operation))/Number(cour);
+                                    const total = (part * cour);
+                                    await Portefeuille.createPortefeuille(acteurId, operation.r_i, fonds.r_i, {
+                                        cours_placement: cour, 
+                                        nombre_parts: part, 
+                                        valeur_placement: total
+                                    }).then(async portefeuille => {
+                                        portefeuille['r_intitule_fonds'] = fonds.r_intitule;
+                                        delete portefeuille.r_i;
+                                        delete portefeuille.e_acteur;
+                                        delete portefeuille.e_fonds;
+                                        delete portefeuille.e_operation;
+                                        delete portefeuille.r_date_modif;
+                                        return response(res, 201, `Soucription terminé`, portefeuille);
+                                    }).catch(err => next(err));
+                                }).catch(err => next(err));
                             }).catch(err => next(err));
                         }).catch(err => next(err));
                     }).catch(err => next(err));
                 }).catch(err => next(err));
             }).catch(err => next(err));
-
         }).catch(err => next(err));                   
     }).catch(err => response(res, 400, err));
 
@@ -298,7 +316,7 @@ const opRachat = async (req, res, next) => {
                             libelle: libelle
                         }, async (mouvement_data) => {
 
-                            await Operation.create(acteur_id, type_operation.r_i, 0, idFcp, op_ref, { 
+                            await Operation.create(acteur_id, type_operation.r_i, { 
                                 reference_operateur: "", 
                                 libelle: libelle, 
                                 montant: montant, 
@@ -486,7 +504,7 @@ const opTransfert = async (req, res, next) => {
 
 module.exports = {
     getAllTypeOperations,
-    getOneOperation,
+    // getOneOperation,
     getAllActeurOperations,
     opSouscription,
     opRachat,

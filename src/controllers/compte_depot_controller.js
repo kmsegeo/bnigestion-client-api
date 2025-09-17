@@ -14,10 +14,8 @@ const createCompteDepot = async (req, res, next) => {
 }
 
 const getCompteDepot = async (req, res, next) => {
-
     console.log('Affichage du compte de dépôt..');
     const acteurId = req.session.e_acteur;
-
     await CompteDepot.findByActeurId(acteurId).then(async compte => {
         if (!compte) return response(res, 404, `Compte de dépôt introuvable !`);
         return response(res, 200, `Chargement du compte terminé`, compte);

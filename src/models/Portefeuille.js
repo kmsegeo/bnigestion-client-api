@@ -5,27 +5,31 @@ const Portefeuille = {
 
     tableName: "_sc_gestion.t_portefeuille",
 
-    async findLastByFonds() {
-        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE r_statut=$1`, [1]);
+    async findAllByActeurId(acteurId) {
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_statut!=$2`, [acteurId, -1]);
         return res.rows;
     },
 
-    async createPortefeuille(acteur, fonds, {nombre_parts, cours_placement, cours_moy_placement, retour_placement, rendement, valeur_placement}) {
+    async findActivesByActeurId(acteurId) {
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_statut=$2`, [acteurId, 1]);
+        return res.rows;
+    },
+
+    async createPortefeuille(acteur, operation, fonds, {cours_placement, nombre_parts, valeur_placement}) {
         const date = new Date()
         const res = db.query(`
             INSERT INTO ${this.tableName} (
-                r_nombre_parts, 
                 r_cours_placement,
-                r_cours_moy_placement,
-                r_retour_placement,
-                r_rendement,
+                r_nombre_parts, 
                 r_valeur_placement,
                 r_date_creer,
                 r_date_modif,
+                r_statut,
                 e_fonds,
+                e_operation,
                 e_acteur)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-            RETURNING *`, [nombre_parts, cours_placement, cours_moy_placement, retour_placement, rendement, valeur_placement, date, date, fonds, acteur]);
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+            RETURNING *`, [cours_placement, nombre_parts, valeur_placement, date, date, 0, fonds, operation, acteur]);
         return (await res).rows[0];
     },
     

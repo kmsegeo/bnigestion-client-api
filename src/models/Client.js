@@ -44,8 +44,9 @@ const Particulier = {
                 r_type_piece,
                 r_numero_piece,
                 r_validite_piece,
+                r_ncompte_titre,
                 e_acteur) 
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`;
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`;
         
         const res = await db.query(query_string, [
             civilite, 
@@ -57,6 +58,7 @@ const Particulier = {
             type_piece, 
             numero_piece, 
             validite_piece,
+            null,
             e_acteur]);
         
         return res.rows[0];
