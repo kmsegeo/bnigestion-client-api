@@ -11,8 +11,8 @@ module.exports = async (req, res, next) => {
         const app_hash = req.headers.appauth;
         const req_hash = await appVerifyer(req.headers.app_id, req.headers.op_code, req.headers.timestamp)
         if (app_hash!=req_hash) 
-            throw `Authentification de la requête à échoué !`;
-        console.log(`Authentification réussi`);
+            throw `Authentification de la requête à échoué !`; 
+        console.log(`Authentification réussi`); 
         next(); 
     } catch(error) {
         return response(res, 401, error);
@@ -21,7 +21,10 @@ module.exports = async (req, res, next) => {
 
 async function appVerifyer(app_id, op_code, timestamp) {
 
-    let canal = null;
+    let canal = null; 
+
+    console.log("application:", app_id);
+    console.log("code:", op_code);
 
     await Canal.findByCode(app_id).then(async result => {
         if (!result) throw `Canal introuvable !`;
@@ -29,7 +32,7 @@ async function appVerifyer(app_id, op_code, timestamp) {
     }).catch(err => { throw err });
 
     await TypeOperation.findByCode(op_code).then(async type_operation => {
-        if (!type_operation) throw `Erreur de code opération`;        
+        if (!type_operation) throw `Erreur de code opération`;
     }).catch(err => { throw err });
 
     const app_mdp = await Encryption.decrypt(canal.r_pass);
