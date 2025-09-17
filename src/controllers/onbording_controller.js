@@ -35,7 +35,7 @@ const onbordingParticulier = async (req, res, next) => {
         adresse} = req.body;
 
     console.log(`Vérification des paramètres`);
-    await Utils.expectedParameters({civilite, nom, prenom, date_naissance, email, telephone, type_piece, numero_piece, validite_piece}).then(async () => {
+    await Utils.expectedParameters({civilite, nom, prenom, date_naissance, email, telephone}).then(async () => {
         
         console.log(`Vérification de l'existance du compte`);
         await Acteur.findByEmail(email).then(async exists_email => {
