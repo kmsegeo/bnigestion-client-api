@@ -46,7 +46,7 @@ const onbordingParticulier = async (req, res, next) => {
             if (exists_phone) return response(res, 409, `Ce numéro de téléphone existe déjà !`);
     
         console.log(`Récupération de l'id du type acteur`);
-        await TypeActeur.findByCode("TYAC002").then(async type_acteur => {
+        await TypeActeur.findByIntitule('particulier').then(async type_acteur => {
             if (!type_acteur) return response(res, 400, `Problème survenu lors de la determination du type acteur`);
             await bcrypt.hash(mdp, 10).then(async hash => {
                 console.log(hash);

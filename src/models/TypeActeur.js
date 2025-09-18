@@ -29,6 +29,15 @@ const TypeActeur = {
             WHERE r_code=$1 AND r_statut=$2`;
         const res = db.query(queryString, [code, 1]);
         return (await res).rows[0];
+    },
+
+    async findByIntitule(intitule) {
+        const queryString = `
+            SELECT r_i, r_code, r_intitule, r_description 
+            FROM ${this.tableName} 
+            WHERE r_intitule=$1 AND r_statut=$2`;
+        const res = db.query(queryString, [intitule, 1]);
+        return (await res).rows[0];
     }
 }
 
