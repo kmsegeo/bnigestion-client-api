@@ -97,8 +97,8 @@ const onbordingParticulier = async (req, res, next) => {
                                         if (data!=1) return response(res, 200, `Envoi de message echoué`, data);
                                         // return response(res, 200, `Message de vérification envoyé`);
                                         console.log(`Message de vérification envoyé`);
-                                        particulier['acteur'] = acteur;
-                                        return response(res, 201, `Compte particulier créé avec succès`, particulier); 
+                                        acteur['particulier'] = particulier;
+                                        return response(res, 201, `Compte particulier créé avec succès`, acteur); 
                                     }).catch(err => next(err)); 
                                 }).catch(err => next(err)); 
                             }).catch(err => next(err));
