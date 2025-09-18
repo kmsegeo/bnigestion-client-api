@@ -172,182 +172,70 @@ const opSouscription = async (req, res, next) => {
 
 };
 
-// const opSouscriptionCompleted = async (req, res, next) => {
-
-//     console.log('Wenhook::Reponse de paiement wave..')
-    
-//     const apikey = req.apikey.r_valeur;
-//     const {id, type, data} = req.body;
-
-//     Utils.expectedParameters({id, type, data}).then(async () => {
-
-//         if (type!="checkout.session.completed" || data.payment_status!="succeeded") return null;
-        
-//         console.log('Paiement wave réussi');
-//         console.log(`Récupération des données de l'opération`);
-//         await Operation.findByRef(data.client_reference).then(async operation => {
-            
-//             if (!operation) {
-//                 await Wave.refund(data.id, async () => {});        
-//                 console.error(`Données de l'opération introuvable !`);
-//             }
-
-//             const idClient = operation.compte_paiement;
-//             const idFcp = operation.e_fonds;
-
-//             if (operation.r_statut==1 || operation.r_statut==-1) { // Souscription déjà pris en compte
-//                 console.log(`Souscription déjà traitée !`)
-//                 return null;     
-//             }
-
-//             console.log(`Envoi des données de souscription à ATSGO..`);
-
-//             await Atsgo.saveMouvement(apikey, {
-//                 idTypeMouvement: 1,             // 1:Apport Liquidité - 2:Retrait de Liquidités
-//                 idClient: idClient,
-//                 idFcp: idFcp,
-//                 date: new Date(),
-//                 dateMouvement: data.when_created,
-//                 dateValeur: data.when_completed,
-//                 idModePaiement: 6,              // 6:wave
-//                 refModePaiement: data.transaction_id,
-//                 montant: operation.r_montant,
-//                 libelle: operation.r_libelle
-//             }, async (mouvement_data) => {
-//                 await Atsgo.saveOperation(apikey, {
-//                     idClient: idClient,
-//                     idFcp: idFcp,
-//                     referenceOperation: operation.r_reference, 
-//                     idTypeOperation: 2,         // 2:Souscription - 3:Rachat
-//                     libelle: operation.r_libelle, 
-//                     dateValeur: data.when_created, 
-//                     idModePaiement: 6,          // 6: Wave
-//                     refModePaiement: data.transaction_id,
-//                     montant: operation.r_montant
-//                 }, async (operaton_data) => {
-//                     await Operation.updateSuccess(operation.r_reference).then(async result => {
-//                         await Acteur.findById(operation.e_acteur).then(acteur => {
-//                             const notification = `Souscription:\nVotre demande à été soumise.\nNo.Opération: ${operaton_data}\nRef.Wave: ${data.id}\nMontant: ${operation.r_montant} ${data.currency}\nRef.Transaction: ${data.transaction_id}`;
-//                             Utils.sendNotificationSMS(acteur.r_i, acteur.r_telephone_prp, notification, 3, () => {
-//                                 console.log(`Opération de souscription envoyé avec succès`, { reference: result.r_reference });
-//                             });
-//                         }).catch(err => console.error(err))
-//                     }).catch(err => console.error(err))
-//                 }).catch(err => {
-//                     Operation.updateFail(operation.r_reference).then(async result => {
-//                         Wave.refund(data.id, () => { 
-//                             Acteur.findById(operation.e_acteur).then(acteur => {
-//                                 const notification = `Votre demande de souscription a échouée. Le Montant: ${operation.r_montant} ${data.currency}, de Ref.Wave: ${data.id}, à été restitué.\nRef.Transaction: ${data.transaction_id}`;
-//                                 Utils.sendNotificationSMS(acteur.r_i, acteur.r_telephone_prp, notification, 3, () => {
-//                                     console.log(`Opération de souscription échouée`, { reference: result.r_reference });
-//                                 });
-//                             }).catch(err => console.error(err)); 
-//                         }); 
-//                         console.error(err);
-//                     }).catch(err => console.error(err))
-//                 })
-//             }).catch(err => {
-//                 Operation.updateFail(operation.r_reference).then(async result => {
-//                     Wave.refund(data.id, () => { 
-//                         Acteur.findById(operation.e_acteur).then(acteur => {
-//                             const notification = `Votre demande de souscription a échouée. Le Montant: ${operation.r_montant} ${data.currency}, de Ref.Wave: ${data.id}, à été restitué.\nRef.Transaction: ${data.transaction_id}`;
-//                             Utils.sendNotificationSMS(acteur.r_i, acteur.r_telephone_prp, notification, 3, () => {
-//                                 console.log(`Opération de souscription échouée`, { reference: operation.r_reference });
-//                             });
-//                         }).catch(err => console.error(err)); 
-//                     }); 
-//                     console.error(err);
-//                 }).catch(err => console.error(err)); 
-//             })
-             
-//         }).catch(err => console.error(err));
-//     }).catch(err => console.error(err));
-// };
-
 const opRachat = async (req, res, next) => {
 
     console.log(`Opération de rachat..`);
-    const op_code = 'TYOP-007';
-    
-    if (req.headers.op_code!=op_code) return response(res, 403, `Type opération non authorisé !`);
-    
-    const apikey = req.apikey.r_valeur;
-    const {idFcp, montant, moyen_paiement} = req.body;
-    const acteur_id = req.session.e_acteur;
 
-    Utils.expectedParameters({idFcp, montant}).then(async () => {
-        
-        console.log(`Recupération des données client`)
-        await Acteur.findById(acteur_id).then(async acteur => {
-            await Particulier.findById(acteur.e_particulier).then(async particulier => {
-                
-                await TypeOperation.findByCode(op_code).then(async type_operation => {
-                    if(!type_operation) return response(res, 404, `Type opération non trouvé !`);
+    const acteurId = req.session.e_acteur;
+    const {fonds_code, montant} = req.body;
 
-                    const op_ref = uuid.v4();
-                    const libelle = `RACHAT FCP BRIDGE - N° DE TRANSACTION: `
-                    const date = new Date();
-                    // const idClient = particulier.r_ncompte_titre;
-                    const idClient = particulier.r_atsgo_id_client;
-
-                    console.log(`Enregistrement de mouvement..`)
-
-                    await Atsgo.saveOperation(apikey, {
-                        idFcp, 
-                        idClient, 
-                        referenceOperation: op_ref, 
-                        idTypeOperation: 3,             // 2:Souscription - 3:Rachat
-                        libelle: "RETRAIT DE FONDS DE PLACEMENT", 
-                        dateValeur: date, 
-                        idModePaiement: 7,              // 7: Paiement espece
-                        refModePaiement: "TMOP-002",
-                        montant: montant
-                    }, async (operaton_data) => {
-                        await Atsgo.saveMouvement(apikey, {
-                            idTypeMouvement: 2,         // 1:Apport Liquidité - 2:Retrait de Liquidités
-                            idClient,
-                            idFcp,
-                            date: date,
-                            dateMouvement: date,
-                            dateValeur: date,
-                            idModePaiement: 7,          // 7: Paiement espece
-                            refModePaiement: "TMOP-002",
-                            montant: montant,
-                            libelle: libelle
-                        }, async (mouvement_data) => {
-
-                            await Operation.create(acteur_id, type_operation.r_i, { 
-                                reference_operateur: "", 
-                                libelle: libelle, 
-                                montant: montant, 
-                                frais_operateur: null, 
-                                frais_operation: null, 
-                                compte_paiement: idClient
-                            }).then(async operation => {
-                                if (!operation) return response(res, 400, `Initialisation de paiement échoué !`);
-
-                                const notification = `Demande de rachat:\nVotre demande à été soumise.\nNo.Opération:${operaton_data}\nMontant: ${montant}XOF\nRef.Operation: ${operation.r_reference}`;
-                                Utils.sendNotificationSMS(acteur.r_i, acteur.r_telephone_prp, notification, 3, () => {
-                                    console.log(`Opération de rachat envoyé avec succès`, { reference: operation.r_reference });
-                                });
-
+    Utils.expectedParameters({fonds_code, montant}).then(async () => {
+        if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant de soucription !`, {montant});
+        await Fonds.findByCode(fonds_code).then(async fonds => {
+            if (!fonds) return response(res, 404, `Fonds indisponible !`);
+            console.log(`Vérification de la valeur liquidative du fonds`);
+            await ValeurLiquidative.findLastByFonds(fonds_code).then(async vl => {
+                if (!vl) return response(res, 404, `Valeur liquidative indisponible !`)
+                if (Number(montant) < Number(vl.r_valeur_courante)) return response(res, 400, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
+                console.log(`Récupération des données utilisateur`);
+                await Particulier.findByActeurId(acteurId).then(async particulier => {
+                    if (!particulier) return response(res, 404, `Le compte utilisateur n'existe pas !`);
+                    if (!particulier.r_ncompte_titre) return response(res, 400, `Ce compte n'est pas valide !`);
+                    console.log(`Recherche du type d'opération`);
+                    await TypeOperation.findByIntitule(`souscription`).then(async type_operation => {
+                        if(!type_operation) return response(res, 404, `Type opération non trouvé !`);  
+                        console.log(`Vérification du solde du compte de dépôt`);                    
+                        await CompteDepot.findByActeurId(acteurId).then(async compte => {
+                            if (!compte) return response(res, 404, `Le compte de dépôt est inexistant !`);
+                            const solde_disponible = compte.r_solde_disponible;
+                            if (Number(solde_disponible) < Number(montant)) return response(res, 400, `Le solde est dispobible est inférieur au montant de souscrition`);
+                            const newMontant = Number(solde_disponible) - Number(montant);
+                            console.log(`Débit du montant sur le compte de dépôt`);
+                            await CompteDepot.mouvement(acteurId, {montant: newMontant}).then(async newCompte => {
+                                console.log(`Enregistrement de l'opération`);
+                                const commission = fonds.r_commission_souscription ? fonds.r_commission_souscription : 0;
+                                await Operation.create(acteurId, type_operation.r_i, {
+                                    reference_operateur: null, 
+                                    libelle: "SOUSCRIPTION - N° DE TRANSACTION: " + particulier.r_ncompte_titre, 
+                                    montant: montant, 
+                                    frais_operation: commission, 
+                                    frais_operateur: 0, 
+                                    compte_paiement: particulier.r_ncompte_titre 
+                                }).then(async operation => {
+                                    if (!operation) return response(res, 400, `Une erreur s'est produite lors de la souscription !`);
+                                    const cour = vl.r_valeur_courante;
+                                    const part = (Number(operation.r_montant) - Number(operation.r_frais_operation))/Number(cour);
+                                    const total = (part * cour);
+                                    await Portefeuille.createPortefeuille(acteurId, operation.r_i, fonds.r_i, {
+                                        cours_placement: cour, 
+                                        nombre_parts: part, 
+                                        valeur_placement: total
+                                    }).then(async portefeuille => {
+                                        portefeuille['r_intitule_fonds'] = fonds.r_intitule;
+                                        delete portefeuille.r_i;
+                                        delete portefeuille.e_acteur;
+                                        delete portefeuille.e_fonds;
+                                        delete portefeuille.e_operation;
+                                        delete portefeuille.r_date_modif;
+                                        return response(res, 201, `Soucription terminé`, portefeuille);
+                                    }).catch(err => next(err));
+                                }).catch(err => next(err));
                             }).catch(err => next(err));
-
-                            const data = {
-                                idOperation: mouvement_data,
-                                moyen_paiement: "TMOP-002",
-                                montant: montant,
-                                devise: "XOF",
-                                date_creation: date
-                            }
-
-                            return response(res, 200, `Operation de rachat en cours de traitement`, data);
-
                         }).catch(err => next(err));
                     }).catch(err => next(err));
                 }).catch(err => next(err));
             }).catch(err => next(err));
-        }).catch(err => next(err));
+        }).catch(err => next(err));                   
     }).catch(err => response(res, 400, err));
 };
 

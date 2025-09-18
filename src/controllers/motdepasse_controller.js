@@ -108,7 +108,7 @@ const renvoiOtp = async (req, res, next) => {
                 await Utils.genearte_msgid().then(async msgid => {
                     await Message.create(acteur.r_i, {msgid, type:1, contenu:otp, operation}).then(async msg => {
                         console.log('otp généré:', otp);
-                        console.log('Envoi de message:', msgid, '..');
+                        console.log(`Envoi de message:${msgid}..`);
                         await fetch(url, {
                             method: "POST",
                             headers: {

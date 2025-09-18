@@ -79,7 +79,7 @@ const onbordingParticulier = async (req, res, next) => {
                             await Utils.genearte_msgid().then(async msgid => {
                                 await Message.create(acteur.r_i, {msgid, type:1, contenu:otp, operation: 1}).then(async message => { 
                                     console.log('otp généré:', otp);
-                                    console.log('Envoi de message:', msgid, '..');
+                                    console.log(`Envoi de message:${msgid}..`);
                                     await fetch(process.env.ML_SMSCI_URL, {
                                         method: "POST",
                                         headers: {
@@ -135,7 +135,7 @@ const createPassword = async (req, res, next) => {
                     await Utils.genearte_msgid().then(async msgid => {
                         await Message.create(acteur_id, {msgid, type:1, contenu:otp, operation: 1}).then(async message => { 
                             console.log('otp généré:', otp);
-                            console.log('Envoi de message:', msgid, '..');
+                            console.log(`Envoi de message:${msgid}..`);
                             await fetch(process.env.ML_SMSCI_URL, {
                                 method: "POST",
                                 headers: {
@@ -184,7 +184,7 @@ const renvoiOtp = async (req, res, next) => {
                 await Utils.genearte_msgid().then(async msgid => {
                     await Message.create(acteur_id, {msgid, type:1, contenu:otp, operation}).then(async msg => {
                         console.log('otp généré:', otp);
-                        console.log('Envoi de message:', msgid, '..');
+                        console.log(`Envoi de message:${msgid}..`);
                         await fetch(url, {
                             method: "POST",
                             headers: {
@@ -222,7 +222,7 @@ const verifierOtp = async (req, res, next) => {
         
         await Message.findByActeurId(acteur_id).then(async msg => {
             if (!msg) return response(res, 400, `Pas de OTP en cours de validité !`);
-            if (otp!=msg.r_contenu)  return response(res, 400, `Vérification echoué !`);
+            if (otp!=msg.r_contenu)  return response(res, 400, `Vérification echoué !`, msg);
             
             const data = {};
 

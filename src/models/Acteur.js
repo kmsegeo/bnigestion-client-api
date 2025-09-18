@@ -4,7 +4,7 @@ const Acteur = {
 
   tableName: '_sc_auth.t_acteur',
 
-  async create({nom_complet, email, telephone, adresse, type_acteur}) {
+  async create({nom_complet, email, telephone, adresse, type_acteur, mdp}) {
     
     const queryString = `
       INSERT INTO ${this.tableName} (
@@ -15,8 +15,9 @@ const Acteur = {
         r_date_creer,
         r_date_modif,
         r_statut,
-        e_type_acteur) 
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8) 
+        e_type_acteur,
+        r_mdp) 
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) 
       RETURNING 
         r_i,
         r_nom_complet, 
@@ -39,7 +40,8 @@ const Acteur = {
           create_date, 
           create_date,
           0, 
-          type_acteur
+          type_acteur,
+          mdp
         ]);
         
       return res.rows[0];
