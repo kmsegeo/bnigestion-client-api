@@ -5,7 +5,7 @@ const onbordingController = require('../controllers/onbording_controller.js');
 
 // PARTICULIER
 
-router.post('/acteurs/particulier', app_auth, onbordingController.onbordingParticulier);
+router.post('/acteurs/particulier', onbordingController.onbordingParticulier);
 
 // router.post('/particulier/:particulierId/kyc', app_auth, onbordingController.createParticulierKYC);
 // router.get('/particulier/:particulierId/kyc', app_auth, onbordingController.getParticulierKYC);
@@ -16,7 +16,7 @@ router.post('/acteurs/particulier', app_auth, onbordingController.onbordingParti
 
 // router.post('/acteurs/:acteurId/motdepasse/activer', app_auth, onbordingController.createPassword);
 
-router.get('/acteurs/:acteurId/otp/renvoyer', app_auth, onbordingController.renvoiOtp);
-router.post('/acteurs/:acteurId/otp/verifier', app_auth, onbordingController.verifierOtp);
+router.get('/acteurs/:acteurId/otp/renvoyer', onbordingController.renvoiOtp);
+router.post('/acteurs/:acteurId/otp/verifier', onbordingController.verifierOtp);
 
 module.exports = router;

@@ -5,6 +5,6 @@ const session_verify = require('../middlewares/session_verify');
 const comteDepotController = require('../controllers/compte_depot_controller');
 
 // router.patch('/', app_auth, session_verify, comteDepotController.createCompteDepot);
-router.get('/', app_auth, session_verify, comteDepotController.getCompteDepot);
+router.get('/', session_verify, comteDepotController.getCompteDepot);
 
 module.exports = router;

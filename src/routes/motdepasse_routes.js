@@ -3,11 +3,11 @@ const router = express.Router();
 const app_auth = require('../middlewares/app_auth');
 const motdepasseController = require('../controllers/motdepasse_controller.js');
 
-router.post('/reinitialiser', app_auth, motdepasseController.resetPassword);
+router.post('/reinitialiser', motdepasseController.resetPassword);
 
-router.get('/otp/renvoyer', app_auth, motdepasseController.renvoiOtp);
-router.post('/otp/verifier', app_auth, motdepasseController.verifierOtp);
+router.get('/otp/renvoyer', motdepasseController.renvoiOtp);
+router.post('/otp/verifier', motdepasseController.verifierOtp);
 
-router.put('/modifier', app_auth, motdepasseController.updatePassword);
+router.put('/modifier', motdepasseController.updatePassword);
 
 module.exports = router;
