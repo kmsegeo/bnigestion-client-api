@@ -109,14 +109,14 @@ const opSouscription = async (req, res, next) => {
     console.log(`Opération de souscription..`);
     
     const acteurId = req.session.e_acteur;
-    const {fonds_code, montant} = req.body;
+    const {code_fonds, montant} = req.body;
 
-    Utils.expectedParameters({fonds_code, montant}).then(async () => {
+    Utils.expectedParameters({code_fonds, montant}).then(async () => {
         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant de soucription !`, {montant});
-        await Fonds.findByCode(fonds_code).then(async fonds => {
+        await Fonds.findByCode(code_fonds).then(async fonds => {
             if (!fonds) return response(res, 404, `Fonds indisponible !`);
             console.log(`Vérification de la valeur liquidative du fonds`);
-            await ValeurLiquidative.findLastByFonds(fonds_code).then(async vl => {
+            await ValeurLiquidative.findLastByFonds(code_fonds).then(async vl => {
                 if (!vl) return response(res, 404, `Valeur liquidative indisponible !`)
                 if (Number(montant) < Number(vl.r_valeur_courante)) return response(res, 400, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
                 console.log(`Récupération des données utilisateur`);
@@ -177,14 +177,14 @@ const opRachat = async (req, res, next) => {
     console.log(`Opération de rachat..`);
 
     const acteurId = req.session.e_acteur;
-    const {fonds_code, montant} = req.body;
+    const {code_fonds, montant} = req.body;
 
-    Utils.expectedParameters({fonds_code, montant}).then(async () => {
+    Utils.expectedParameters({code_fonds, montant}).then(async () => {
         if (isNaN(montant)) return response(res, 400, `Valeur numérique attendue pour le montant de soucription !`, {montant});
-        await Fonds.findByCode(fonds_code).then(async fonds => {
+        await Fonds.findByCode(code_fonds).then(async fonds => {
             if (!fonds) return response(res, 404, `Fonds indisponible !`);
             console.log(`Vérification de la valeur liquidative du fonds`);
-            await ValeurLiquidative.findLastByFonds(fonds_code).then(async vl => {
+            await ValeurLiquidative.findLastByFonds(code_fonds).then(async vl => {
                 if (!vl) return response(res, 404, `Valeur liquidative indisponible !`)
                 if (Number(montant) < Number(vl.r_valeur_courante)) return response(res, 400, `Le montant attendu est inférieur à la valeur liquidative actuelle !`);
                 console.log(`Récupération des données utilisateur`);

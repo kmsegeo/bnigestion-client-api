@@ -113,55 +113,6 @@ const onbordingParticulier = async (req, res, next) => {
     }).catch(error => response(res, 400, error));
 }
 
-const createPassword = async (req, res, next) => {
-    
-    console.log(`Création de mote de passe..`)
-    
-    const acteur_id = req.params.acteurId;
-    const mdp = req.body.mdp;
-
-    await Acteur.findById(acteur_id).then(async acteur => {
-        if (!acteur) return response(res, 404, `Acteur introuvable !`);
-        if (acteur.r_statut!=0) return response(res, 409, `Se compte semble déjà actif !`)
-        console.log(`Hashage du mot de passe`);
-        await bcrypt.hash(mdp, 10).then(async hash => {
-            console.log(hash);
-            await Acteur.updatePassword(acteur_id, hash).then(async result => {
-                if (!result) return response(res, 400, `Une erreur s'est produite à la création du mot de passe !`);
-                
-                await Message.clean(acteur_id).catch(err => next(err)); 
-
-                await Utils.aleatoireOTP().then(async otp => {
-                    await Utils.genearte_msgid().then(async msgid => {
-                        await Message.create(acteur_id, {msgid, type:1, contenu:otp, operation: 1}).then(async message => { 
-                            console.log('otp généré:', otp);
-                            console.log(`Envoi de message:${msgid}..`);
-                            await fetch(process.env.ML_SMSCI_URL, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                    identify: process.env.ML_SMS_ID,
-                                    pwd: process.env.ML_SMS_PWD,
-                                    fromad: "BNI CI",
-                                    toad: acteur.r_telephone_prp,
-                                    msgid: msgid,
-                                    text: `Votre code de vérification est : ${message.r_contenu}`
-                                })
-                            }).then(res => res.json()).then(data => {
-                                if (data!=1) return response(res, 200, `Envoi de message echoué`, data);
-                                return response(res, 200, `Message de vérification envoyé`);
-                            }).catch(err => next(err)); 
-                        }).catch(err => next(err)); 
-                    }).catch(err => next(err));
-                }).catch(err => next(err));
-                
-            }).catch(err => next(err));
-        }).catch(err => next(err));
-    }).catch(err => next(err));
-}
-
 const renvoiOtp = async (req, res, next) => {
     
     console.log(`Renvoi du message OTP..`);
@@ -254,7 +205,6 @@ const verifierOtp = async (req, res, next) => {
 
 module.exports = {
     onbordingParticulier,
-    createPassword,
     renvoiOtp,
     verifierOtp
 }

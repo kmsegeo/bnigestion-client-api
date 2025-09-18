@@ -6,12 +6,22 @@ const Portefeuille = {
     tableName: "_sc_gestion.t_portefeuille",
 
     async findAllByActeurId(acteurId) {
-        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_statut!=$2`, [acteurId, -1]);
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_statut!=$2`, [acteurId, '-1']);
+        return res.rows;
+    },
+
+    async findUnactiveByActeurId(acteurId) {
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_statut=$2`, [acteurId, 0]);
         return res.rows;
     },
 
     async findActivesByActeurId(acteurId) {
         const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_statut=$2`, [acteurId, 1]);
+        return res.rows;
+    },
+
+    async findRejectedByActeurId(acteurId) {
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_statut=$2`, [acteurId, 2]);
         return res.rows;
     },
 
