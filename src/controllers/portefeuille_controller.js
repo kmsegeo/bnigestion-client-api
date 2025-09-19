@@ -78,7 +78,7 @@ const getAllPortefeuilles = async (req, res, next) => {
             portefeuille['r_total_placement'] = total;
             portefeuille['r_rendement_total'] = Number(rendement.toFixed(2));
             portefeuille['r_rendement_positive'] = Number(rendement) > 0
-            portefeuille['r_taux_rendement'] = Number(taux.toFixed(2));
+            portefeuille['r_taux_rendement'] = taux.toFixed(2) + "%";
             portefeuille['r_valeur_placement'] = Number(valeur.toFixed(2));
 
             evolution.push(portefeuille);
@@ -92,7 +92,7 @@ const getAllPortefeuilles = async (req, res, next) => {
 
         const data = {
             valeur_portefeuille,
-            rendement_global: Number((cumultaux/cptfd).toFixed(2)),
+            rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
             portefeuilles : evolution, 
             historique: portefeuilles
         }
