@@ -7,6 +7,9 @@ const jwt = require('jsonwebtoken');
 const { Particulier, Entreprise } = require("../models/Client");
 const Document = require("../models/Document");
 const Portefeuille = require("../models/Portefeuille");
+const CompteDepot = require("../models/CompteDepot");
+const Fonds = require("../models/Fonds");
+const ValeurLiquidative = require("../models/ValeurLiquidative");
 
 const connect = async (req, res, next) => {
     
@@ -107,12 +110,69 @@ const loadSommaire = async (req, res, next) => {
      * [ ] Charger la liste des fonds, comportant la dernière valeur liquidative par fonds
      */
     console.log(`Chargement du sommaire..`);
-    return response(res, 200, "Chargement terminé", {
-        compte_depot: 0,
-        total_portefeuille: 0,
-        portefeuilles: [],
-        fonds: []
-    }); 
+    const acteurId = req.session.e_acteur;
+
+    try {
+        console.log('Chargement du compte de dépôt..');
+        const comptedepot = await CompteDepot.findByActeurId(acteurId);
+
+        console.log('Chargement des fonds..');
+        const fonds = await Fonds.findAll();
+
+        console.log('Chargement des portefeuilles..');
+        const portefeuilles = await Portefeuille.findAllByActeurId(acteurId);
+
+        let valeur_portefeuilles = 0;
+        let cumultaux = 0;
+        let cptfd = 0;
+
+        for (let f of fonds) {
+
+            let cpt = 0;
+            let parts = 0;
+            let vl = 0;
+            let total = 0;
+            let rendement = 0;
+            let taux = 0;
+            let valeur = 0;
+
+            vl = await ValeurLiquidative.findLastByFonds(f.r_code);
+
+            for(let p of portefeuilles) {
+                if (f.r_i==p.e_fonds) {
+                    if (p.r_statut==1) {
+                        parts = Number(parts) + Number(p.r_nombre_parts);
+                        total = Number(total) + Number(p.r_montant_placement);
+                        cpt +=1;
+                    }
+                    f['r_valeur_liquidative'] = vl.r_valeur_courante;
+                    f['r_datevl'] = vl.r_datevl;
+                    f['r_taux_redement'] = vl.r_taux_redement;
+                    f['r_rendement_positive'] = vl.r_rendement_positive;
+                }
+            }
+
+            rendement = ((Number(vl.r_valeur_courante) * parts) - total);
+            taux = (rendement/total)*100;
+            valeur = total + rendement;
+
+            cumultaux = cumultaux + taux;
+            valeur_portefeuilles = valeur_portefeuilles + valeur;
+
+            cptfd +=1;
+        }
+        
+        return response(res, 200, "Chargement terminé", {
+            compte_depot: Number(comptedepot.r_solde_disponible),
+            valeur_portefeuilles,
+            rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
+            // portefeuilles,
+            fonds
+        }); 
+
+    } catch (error) {
+        next(error)
+    }
 }
 
 const loadActiveSsessions = async (req, res, next) => {
