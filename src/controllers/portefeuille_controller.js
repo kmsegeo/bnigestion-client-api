@@ -16,7 +16,8 @@ const getAllPortefeuilles = async (req, res, next) => {
     const acteurId = req.session.e_acteur;
     try {
 
-        let analyse_gobal = [];
+        let historique = [];
+        let evolution = [];
 
         const portefeuilles = await Portefeuille.findActivesByActeurId(acteurId);
         const fonds = await Fonds.findAll();
@@ -69,9 +70,9 @@ const getAllPortefeuilles = async (req, res, next) => {
             portefeuille['taux_rendement'] = Number(taux.toFixed(2));
             portefeuille['valeur_placement'] = Number(valeur.toFixed(2));
 
-            analyse_gobal.push(portefeuille)
+            evolution.push(portefeuille);
         }
-        return response(res, 200, 'Liste des portefeuilles', portefeuilles, analyse_gobal);
+        return response(res, 200, 'Liste des portefeuilles', {portefeuilles : evolution, historique: portefeuilles});
     } catch (error) {
         next(error);
     }
