@@ -149,7 +149,7 @@ const opSouscription = async (req, res, next) => {
                                     const total = (part * cour);
                                     await Portefeuille.createPortefeuille(acteurId, operation.r_i, fonds.r_i, {
                                         cours_placement: cour, 
-                                        nombre_parts: part, 
+                                        nombre_parts: part.toFixed(2), 
                                         valeur_placement: total
                                     }).then(async portefeuille => {
                                         portefeuille['r_intitule_fonds'] = fonds.r_intitule;

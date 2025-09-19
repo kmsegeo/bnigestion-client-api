@@ -8,6 +8,7 @@ const Fonds = {
 
     async findAll() {
         const res = db.query(`SELECT 
+            r_i,
             r_code, 
             r_intitule, 
             r_type,

@@ -31,7 +31,7 @@ const Portefeuille = {
             INSERT INTO ${this.tableName} (
                 r_cours_placement,
                 r_nombre_parts, 
-                r_valeur_placement,
+                r_montant_placement,
                 r_date_creer,
                 r_date_modif,
                 r_statut,

@@ -35,7 +35,7 @@ const ValeurLiquidative = {
         return (await res).rows[0]
     },
 
-    async findLastByFonds(fonds) {
+    async findLastByFonds(code_fonds) {
         const res = db.query(`SELECT 
             r_valeur_courante, 
             r_datevl, 
@@ -43,11 +43,11 @@ const ValeurLiquidative = {
             r_valeur_precedente,
             r_date_precedente,
             r_taux_redement,
-            r_rendement_positive FROM ${this.tableName} WHERE e_fonds=(SELECT r_i FROM ${Fonds.tableName} WHERE r_code=$1) AND r_statut=$2 ORDER BY r_datevl DESC LIMIT 1`, [fonds, 1]);
+            r_rendement_positive FROM ${this.tableName} WHERE e_fonds=(SELECT r_i FROM ${Fonds.tableName} WHERE r_code=$1) AND r_statut=$2 ORDER BY r_datevl DESC LIMIT 1`, [code_fonds, 1]);
         return (await res).rows[0];
     },
 
-    async findAllByFonds(fonds) {
+    async findAllByFonds(code_fonds) {
         const res = db.query(`SELECT 
             r_valeur_courante, 
             r_datevl, 
@@ -55,7 +55,7 @@ const ValeurLiquidative = {
             r_valeur_precedente,
             r_date_precedente,
             r_taux_redement,
-            r_rendement_positive FROM ${this.tableName} WHERE e_fonds=(SELECT r_i FROM ${Fonds.tableName} WHERE r_code=$1) AND r_statut=$2 ORDER BY r_datevl DESC`, [fonds, 1]);
+            r_rendement_positive FROM ${this.tableName} WHERE e_fonds=(SELECT r_i FROM ${Fonds.tableName} WHERE r_code=$1) AND r_statut=$2 ORDER BY r_datevl DESC`, [code_fonds, 1]);
         return (await res).rows;
     },
     
