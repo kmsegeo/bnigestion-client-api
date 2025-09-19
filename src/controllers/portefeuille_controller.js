@@ -97,7 +97,7 @@ const getAllPortefeuilles = async (req, res, next) => {
             valeur_portefeuilles,
             rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
             portefeuilles : portefeuilles_groupes, 
-            historique: historique
+            historique: portefeuilles
         }
 
         return response(res, 200, 'Liste des portefeuilles', data);
