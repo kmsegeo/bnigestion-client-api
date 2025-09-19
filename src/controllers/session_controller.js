@@ -160,6 +160,8 @@ const loadSommaire = async (req, res, next) => {
             cumultaux = cumultaux + taux;
             valeur_portefeuilles = valeur_portefeuilles + valeur;
 
+            delete f.r_i
+
             cptfd +=1;
         }
         
