@@ -149,6 +149,8 @@ const loadSommaire = async (req, res, next) => {
                     f['r_datevl'] = vl.r_datevl;
                     f['r_taux_redement'] = vl.r_taux_redement;
                     f['r_rendement_positive'] = vl.r_rendement_positive;
+
+                    delete f.r_i
                 }
             }
 
