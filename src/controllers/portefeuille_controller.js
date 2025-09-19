@@ -42,6 +42,7 @@ const getAllPortefeuilles = async (req, res, next) => {
                 if (f.r_i==p.e_fonds) {
 
                     p['r_intitule_fonds'] = f.r_intitule
+                    p['t_type_fonds'] = f.r_type;
                     p['r_statut'] = portefeuille_statuts[p.r_statut];
                     
                     parts = Number(parts) + Number(p.r_nombre_parts);
@@ -62,17 +63,26 @@ const getAllPortefeuilles = async (req, res, next) => {
             valeur = total + rendement;
 
             portefeuille['r_intitule_fonds'] = f.r_intitule;
+            portefeuille['t_type_fonds'] = f.r_type;
+            portefeuille['r_taux_allocation'] = f.r_taux_allocation;
             portefeuille['r_nombre_parts'] = Number(parts.toFixed(2))
             portefeuille['r_valeur_liquidative'] = Number(vl.r_valeur_courante);
             portefeuille['r_cours_moy_placement'] = Number(cours/cpt);
             portefeuille['r_total_placement'] = total;
             portefeuille['r_rendement_total'] = Number(rendement.toFixed(2));
+            portefeuille['r_rendement_positive'] = Number(rendement) > 0
             portefeuille['r_taux_rendement'] = Number(taux.toFixed(2));
             portefeuille['r_valeur_placement'] = Number(valeur.toFixed(2));
 
             evolution.push(portefeuille);
         }
-        return response(res, 200, 'Liste des portefeuilles', {portefeuilles : evolution, historique: portefeuilles});
+        
+        const data = {
+            portefeuilles : evolution, 
+            historique: portefeuilles
+        }
+
+        return response(res, 200, 'Liste des portefeuilles', data);
     } catch (error) {
         next(error);
     }
