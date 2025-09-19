@@ -1,3 +1,4 @@
+const default_data = require('../config/default_data');
 const response = require('../middlewares/response');
 const Acteur = require('../models/Acteur');
 const { Particulier } = require('../models/Client');
@@ -8,15 +9,9 @@ const Portefeuille = require('../models/Portefeuille');
 const TypeOperation = require('../models/TypeOperation');
 const ValeurLiquidative = require('../models/ValeurLiquidative');
 const Utils = require('../utils/utils.methods');
-// const Operation = require("../models/Operation");
-// const Acteur = require("../models/Acteur");
-// const Session = require("../models/Session");
-// const Utils = require("../utils/utils.methods");
-// const Fonds = require('../models/Fonds');
-// const { Particulier } = require('../models/Client');
-// const Wave = require('../utils/wave.methods');
-// const uuid = require('uuid');
-// const OTP = require('../models/OTP');
+
+const operation_statuts = default_data.operation_statuts;
+const portefeuille_statuts = default_data.portefeuille_statuts
 
 const getAllTypeOperations = async (req, res, next) => {
     await TypeOperation.findAll()
@@ -28,9 +23,11 @@ const getAllActeurOperations = async (req, res, next) => {
     console.log(`Chargement des opérations..`);
     const acteurId = req.session.e_acteur;
     await Operation.findAllByActeurId(acteurId).then(async operations => {
+        
         for(let op of operations) {
             await TypeOperation.findById(op.e_type_operation).then(async top => {
                 op['r_type_operation'] = top.r_intitule;
+                op['r_statut'] = operation_statuts[op.r_statut];
                 delete op.r_i
                 delete op.e_acteur
                 delete op.e_type_operation
@@ -66,6 +63,8 @@ const opDepot = async (req, res, next) => {
                 console.log("Approvisionnement de compte de depot");
                 
                 operation['r_type_operation'] = type_operation.r_intitule;
+                operation['r_statut'] = operation_statuts[operation.r_statut];
+
                 delete operation.r_i;
                 delete operation.e_acteur;
                 delete operation.e_type_operation;
@@ -154,6 +153,7 @@ const opSouscription = async (req, res, next) => {
                                         valeur_placement: total
                                     }).then(async portefeuille => {
                                         portefeuille['r_intitule_fonds'] = fonds.r_intitule;
+                                        portefeuille['r_statut'] = portefeuille_statuts[portefeuille.r_statut];
                                         delete portefeuille.r_i;
                                         delete portefeuille.e_acteur;
                                         delete portefeuille.e_fonds;
@@ -222,6 +222,7 @@ const opRachat = async (req, res, next) => {
                                         valeur_placement: total
                                     }).then(async portefeuille => {
                                         portefeuille['r_intitule_fonds'] = fonds.r_intitule;
+                                        portefeuille['r_statut'] = portefeuille_statuts[portefeuille.r_statut];
                                         delete portefeuille.r_i;
                                         delete portefeuille.e_acteur;
                                         delete portefeuille.e_fonds;
