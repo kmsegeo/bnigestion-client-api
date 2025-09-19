@@ -10,6 +10,9 @@ const Fonds = {
         const res = db.query(`SELECT 
             r_code, 
             r_intitule, 
+            r_type,
+            r_valeur_action,
+            r_taux_allocation,
             r_description, 
             r_commission_souscription, 
             r_commission_sortie FROM ${this.tableName} WHERE r_statut=$1`, [1]);
@@ -21,6 +24,9 @@ const Fonds = {
             SELECT 
                 r_code, 
                 r_intitule, 
+                r_type,
+                r_valeur_action,
+                r_taux_allocation,
                 r_description, 
                 r_commission_souscription, 
                 r_commission_sortie
@@ -35,6 +41,9 @@ const Fonds = {
                 r_i,
                 r_code, 
                 r_intitule, 
+                r_type,
+                r_valeur_action,
+                r_taux_allocation,
                 r_description, 
                 r_commission_souscription, 
                 r_commission_sortie
@@ -48,6 +57,9 @@ const Fonds = {
             SELECT r_i,
                 r_code, 
                 r_intitule, 
+                r_type,
+                r_valeur_action,
+                r_taux_allocation,
                 r_description, 
                 r_commission_souscription, 
                 r_commission_sortie

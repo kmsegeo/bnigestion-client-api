@@ -15,5 +15,4 @@ router.get('/fonds', session_verify, fondsController.getAllFonds);
 router.get('/fonds/:code', session_verify, fondsController.getOneFonds);
 router.get('/fonds/:code/vls', session_verify, fondsController.getAllVlsByFonds);
 
-
 module.exports = router;
