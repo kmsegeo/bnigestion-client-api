@@ -29,7 +29,7 @@ const getAllPortefeuilles = async (req, res, next) => {
         for (let f of fonds) {
 
             let portefeuille = {}
-            let action = []
+            let actions = []
 
             let cpt = 0;
             let parts = 0;
@@ -62,21 +62,21 @@ const getAllPortefeuilles = async (req, res, next) => {
                     delete p.e_acteur;
                     delete p.e_operation;
 
-                    action.push()
+                    actions.push(p);
                 }
             }
 
             rendement = ((Number(vl.r_valeur_courante) * parts) - total);
-            taux = (rendement/total)*100
+            taux = (rendement/total)*100;
             valeur = total + rendement;
 
-            cumultaux = cumultaux+taux;
+            cumultaux = cumultaux + taux;
             valeur_portefeuilles = valeur_portefeuilles + valeur;
 
             portefeuille['r_intitule_fonds'] = f.r_intitule;
             portefeuille['t_type_fonds'] = f.r_type;
             portefeuille['r_taux_allocation'] = f.r_taux_allocation;
-            portefeuille['r_nombre_parts'] = Number(parts.toFixed(2))
+            portefeuille['r_nombre_parts'] = Number(parts.toFixed(2));
             portefeuille['r_valeur_liquidative'] = Number(vl.r_valeur_courante);
             portefeuille['r_cours_moy_placement'] = Number(cours/cpt);
             portefeuille['r_total_placement'] = total;
@@ -85,17 +85,19 @@ const getAllPortefeuilles = async (req, res, next) => {
             portefeuille['r_taux_rendement'] = taux.toFixed(2) + "%";
             portefeuille['r_valeur_placement'] = Number(valeur.toFixed(2));
 
+            historique.push({
+                fonds: f.r_intitule,
+                actions
+            });
             portefeuilles_groupes.push(portefeuille);            
             cptfd +=1;
         }
         
-        console.log(cptfd)
-
         const data = {
             valeur_portefeuilles,
             rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
             portefeuilles : portefeuilles_groupes, 
-            historique: portefeuilles
+            historique: historique
         }
 
         return response(res, 200, 'Liste des portefeuilles', data);
