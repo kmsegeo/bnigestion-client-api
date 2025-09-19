@@ -16,13 +16,16 @@ const getAllPortefeuilles = async (req, res, next) => {
     const acteurId = req.session.e_acteur;
     try {
 
-        let valeur_portefeuille = 0
+        let valeur_portefeuille = 0;
+        let cumultaux = 0;
         let historique = [];
         let evolution = [];
 
         const portefeuilles = await Portefeuille.findActivesByActeurId(acteurId);
         const fonds = await Fonds.findAll();
         
+        let cptfd = 0;
+
         for (let f of fonds) {
 
             let portefeuille = {}
@@ -62,6 +65,8 @@ const getAllPortefeuilles = async (req, res, next) => {
             rendement = ((Number(vl.r_valeur_courante) * parts) - total);
             taux = (rendement/total)*100
             valeur = total + rendement;
+
+            cumultaux = cumultaux+taux;
             valeur_portefeuille = valeur_portefeuille + valeur;
 
             portefeuille['r_intitule_fonds'] = f.r_intitule;
@@ -77,10 +82,17 @@ const getAllPortefeuilles = async (req, res, next) => {
             portefeuille['r_valeur_placement'] = Number(valeur.toFixed(2));
 
             evolution.push(portefeuille);
+
+            cptfd +=1;
+            console.log(taux)
+            console.log(cumultaux)
         }
         
+        console.log(cptfd)
+
         const data = {
             valeur_portefeuille,
+            rendement_global: Number((cumultaux/cptfd).toFixed(2)),
             portefeuilles : evolution, 
             historique: portefeuilles
         }
