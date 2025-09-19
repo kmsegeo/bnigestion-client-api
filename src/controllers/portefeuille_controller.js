@@ -84,8 +84,6 @@ const getAllPortefeuilles = async (req, res, next) => {
             evolution.push(portefeuille);
 
             cptfd +=1;
-            console.log(taux)
-            console.log(cumultaux)
         }
         
         console.log(cptfd)
