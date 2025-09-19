@@ -61,14 +61,14 @@ const getAllPortefeuilles = async (req, res, next) => {
             taux = (rendement/total)*100
             valeur = total + rendement;
 
-            portefeuille['intitule_fonds'] = f.r_intitule;
-            portefeuille['nombre_parts'] = Number(parts.toFixed(2))
-            portefeuille['valeur_liquidative'] = Number(vl.r_valeur_courante);
-            portefeuille['cours_moy_placement'] = Number(cours/cpt);
-            portefeuille['total_placement'] = total;
-            portefeuille['rendement_total'] = Number(rendement.toFixed(2));
-            portefeuille['taux_rendement'] = Number(taux.toFixed(2));
-            portefeuille['valeur_placement'] = Number(valeur.toFixed(2));
+            portefeuille['r_intitule_fonds'] = f.r_intitule;
+            portefeuille['r_nombre_parts'] = Number(parts.toFixed(2))
+            portefeuille['r_valeur_liquidative'] = Number(vl.r_valeur_courante);
+            portefeuille['r_cours_moy_placement'] = Number(cours/cpt);
+            portefeuille['r_total_placement'] = total;
+            portefeuille['r_rendement_total'] = Number(rendement.toFixed(2));
+            portefeuille['r_taux_rendement'] = Number(taux.toFixed(2));
+            portefeuille['r_valeur_placement'] = Number(valeur.toFixed(2));
 
             evolution.push(portefeuille);
         }
