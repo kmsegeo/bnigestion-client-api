@@ -6,7 +6,7 @@ const TypeOperation = {
 
     async findAll() {
         const queryString = `
-            SELECT r_code, r_intitule, r_description, r_transaction 
+            SELECT r_i, r_code, r_intitule, r_description, r_transaction 
             FROM ${this.tableName} WHERE r_statut=$1`;
         const res = db.query(queryString, [1]);
         return (await res).rows;

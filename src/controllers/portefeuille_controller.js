@@ -89,7 +89,8 @@ const getAllPortefeuilles = async (req, res, next) => {
                 fonds: f.r_intitule,
                 actions
             });
-            portefeuilles_groupes.push(portefeuille);            
+
+            portefeuilles_groupes.push(portefeuille);
             cptfd +=1;
         }
         

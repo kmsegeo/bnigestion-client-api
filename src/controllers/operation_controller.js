@@ -20,21 +20,46 @@ const getAllTypeOperations = async (req, res, next) => {
 }
 
 const getAllActeurOperations = async (req, res, next) => {
+   
     console.log(`Chargement des opérations..`);
     const acteurId = req.session.e_acteur;
-    await Operation.findAllByActeurId(acteurId).then(async operations => {
-        
+
+    try {
+
+        const operations = await Operation.findAllByActeurId(acteurId);
+        const portefeuilles = await Portefeuille.findAllByActeurId(acteurId);
+        const type_operations = await TypeOperation.findAll();
+        const fonds = await Fonds.findAll();
+
         for(let op of operations) {
-            await TypeOperation.findById(op.e_type_operation).then(async top => {
-                op['r_type_operation'] = top.r_intitule;
-                op['r_statut'] = operation_statuts[op.r_statut];
-                delete op.r_i
-                delete op.e_acteur
-                delete op.e_type_operation
-            })
+            for(let tyop of type_operations) {
+
+                for (let p of portefeuilles) {
+                    if (op.r_i==p.e_operation) {
+                        for(f of fonds) {
+                            if (f.r_i==p.e_fonds) {
+                                op['r_intitule_fonds'] = f.r_intitule;
+                                op['r_type_fonds'] = f.r_type;
+                            }
+                        }
+                        op['r_valeur_liquidative'] = p.r_cours_placement;
+                    }
+                }
+                
+                if (op.e_type_operation==tyop.r_i) {
+                    op['r_type_operation'] = tyop.r_intitule;
+                    op['r_statut'] = operation_statuts[op.r_statut];
+                    delete op.r_i
+                    delete op.e_acteur
+                }
+            }
         }
+        
         return response(res, 200, `Liste des opérations`, operations);
-    }).catch(err => next(err));
+
+    } catch (error) {
+        next(error);
+    }
 }
 
 const opDepot = async (req, res, next) => {
