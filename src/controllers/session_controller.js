@@ -180,11 +180,11 @@ const loadSommaire = async (req, res, next) => {
                         if (f.r_i==p.e_fonds) {
                             if (p.r_statut==1) {
                                 podate = new Date(p.r_date_creer);
-                                if (podate.getTime() <= vldate.getTime()) {
+                                // if (podate.getTime() <= vldate.getTime()) {
                                     parts = Number(parts) + Number(p.r_nombre_parts);
                                     total = Number(total) + Number(p.r_montant_placement);
                                     cpt +=1;
-                                }
+                                // }
                             }
                         }
                     }
