@@ -102,17 +102,18 @@ const loadSommaire = async (req, res, next) => {
     const acteurId = req.session.e_acteur;
 
     try {
-        console.log('Chargement du compte de dépôt..');
+        console.log('Chargement du compte de dépôt');
         const comptedepot = await CompteDepot.findByActeurId(acteurId);
         if (!comptedepot) return response(res, 401, `Ce compte est en attente de validation !`);
 
-        console.log('Chargement des fonds..');
+        console.log('Chargement des fonds');
         const fonds = await Fonds.findAll();
 
-        console.log('Chargement des portefeuilles..');
+        console.log('Chargement des portefeuilles');
         const portefeuilles = await Portefeuille.findAllByActeurId(acteurId);
 
         let valeur_portefeuilles = 0;
+        let evolution_portefeuilles = [];
         let cumultaux = 0;
         let cptfd = 0;
 
@@ -149,16 +150,77 @@ const loadSommaire = async (req, res, next) => {
             cumultaux = cumultaux + taux;
             valeur_portefeuilles = valeur_portefeuilles + valeur;
 
-            delete f.r_i
+            // delete f.r_i
 
             cptfd +=1;
+        }
+
+        const vls = await ValeurLiquidative.findAll();
+        let cltps = []
+
+        for (let vl of vls) {
+
+            let cltp = {}
+            let valeur_p = 0;
+
+            for (let f of fonds) {
+
+                let cpt = 0;
+                let parts = 0;
+                let total = 0;
+                let rendement = 0;
+                let valeur = 0;
+
+                if (f.r_i==vl.e_fonds) {
+
+                    let vldate = new Date(vl.r_datevl);
+                    let podate = null;
+                   
+                    for(let p of portefeuilles) {
+                        if (f.r_i==p.e_fonds) {
+                            if (p.r_statut==1) {
+                                podate = new Date(p.r_date_creer);
+                                if (podate.getTime() <= vldate.getTime()) {
+                                    parts = Number(parts) + Number(p.r_nombre_parts);
+                                    total = Number(total) + Number(p.r_montant_placement);
+                                    cpt +=1;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (podate.getTime() <= vldate.getTime()) {
+                        rendement = ((Number(vl.r_valeur_courante) * parts) - total);
+                        valeur = total + rendement;
+                        valeur_p = valeur_p + valeur;
+                        
+                        cltp.fcp = f.r_code;
+                        cltp.vldate=vl.r_datevl;
+                        cltp.valeur_portefeuille = valeur_p;
+                    }
+                }
+            }
+
+            cltps.push(cltp);
+        }
+
+        let evolution = [];
+        let old = {}
+        for (let cur of cltps) {
+            let curdate = new Date(cur.vldate)
+            let olddate = new Date(old.vldate)
+            if (curdate.getTime()==olddate.getTime()) {
+                let valeur = (Number(cur.valeur_portefeuille) + Number(old.valeur_portefeuille)).toFixed(2);
+                evolution.push({date:curdate, valeur: Number(valeur)});
+            }
+            old = cur;
         }
         
         return response(res, 200, "Chargement terminé", {
             compte_depot: Number(comptedepot.r_solde_disponible),
             valeur_portefeuilles: valeur_portefeuilles,
             rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
-            portefeuilles,
+            evolution_portefeuilles:evolution,
             fonds
         }); 
 

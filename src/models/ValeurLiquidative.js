@@ -5,6 +5,11 @@ const ValeurLiquidative = {
 
     tableName: '_sc_gestion.t_val_liquidative',
 
+    async findAll() {
+        const res = db.query(`SELECT * FROM ${this.tableName} WHERE r_statut=$1 ORDER BY r_datevl`, [1]);
+        return (await res).rows;
+    },
+
     // async findAllBetween2Date(from, to) {
         
     //     const start = from.toString() + ' 00:00';
