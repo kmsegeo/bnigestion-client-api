@@ -22,7 +22,7 @@ const connect = async (req, res, next) => {
     console.log(`Connexion..`);
     const {email, mdp} = req.body;
 
-    console.log(req.headers.app_id)
+    console.log(req.headers.app_id);
     
     console.log(`Vérification des paramètres`);
     Utils.expectedParameters({email}).then(async () => {
@@ -31,12 +31,13 @@ const connect = async (req, res, next) => {
         await Acteur.findByEmail(email).then(async acteur => {
             if (!acteur) return response(res, 401, `Login ou mot de passe incorrect !`);
             if (acteur.e_type_acteur && acteur.e_type_acteur=='1') return response(res, 401, `Ce compte n'est pas enregistré en tant que client`);
-            if (acteur.r_statut==0 || acteur.r_date_activation==undefined) return response(res, 401, `Ce compte n'a pas été activé !`);
             console.log(`Vérification de mot de passe`)
             await bcrypt.compare(mdp, acteur.r_mdp).then(async valid => {
                 if(!valid) return response(res, 401, `Login ou mot de passe incorrect !`);
+                if (acteur.r_statut==0 || acteur.r_date_activation==undefined) return response(res, 401, `Ce compte n'a pas été activé !`);
                 if (acteur.r_statut==-1) return response(res, 401, `Ce compte à été supprimé !`);
-                console.log(`Création de session`)
+                
+                console.log(`Création de session`);
                 await Session.create({
                     os: req.headers.os,
                     adresse_ip: req.headers.adresse_ip,
@@ -47,15 +48,10 @@ const connect = async (req, res, next) => {
                 }).then(async session => {
 
                     if (acteur.e_type_acteur && acteur.e_type_acteur=='2') {            // Particulier
-                        
+
+                        console.log(`Chargement des données du client`);
                         await Particulier.findByActeurId(acteur.r_i).then(async particulier => {
                             if (!particulier) return response(res, 400, `Une erreur s'est produite à la récupération du compte client !`);
-                            
-                            // console.log(`Chargement des personnes à contacter`);
-                            // await PersonEmergency.findAllByParticulier(acteur.e_particulier).then(async personnes => {
-                            //     particulier['personnes_contacter'] = personnes;
-                            // }).catch(err => next(err));
-
                             acteur['particulier'] = particulier;
                         }).catch(err => next(err));
 
@@ -64,12 +60,6 @@ const connect = async (req, res, next) => {
                         console.log(`Chargement des données entreprise`);
                         await Entreprise.findByActeurId(acteur.r_i).then(async entreprise => {
                             if (!entreprise) return response(res, 400, `Une erreur s'est produite à la récupération du compte client !`);
-
-                            // console.log(`Chargement des mebmbres du personnel`);
-                            // await PersonnelEntreprise.findByEntrepriseId(entreprise.r_i).then(async personnels => {
-                            //     entreprise['personnels'] = personnels;
-                            // }).catch(err => next(err));
-
                             acteur['entreprise'] = entreprise;
                         }).catch(err => next(err));
                     }
@@ -102,7 +92,6 @@ const connect = async (req, res, next) => {
 }
 
 const loadSommaire = async (req, res, next) => {
-
     /**
      * [ ] Charger le compte de depots
      * [ ] Charger la valeur totale des portefeuilles du client
@@ -115,6 +104,7 @@ const loadSommaire = async (req, res, next) => {
     try {
         console.log('Chargement du compte de dépôt..');
         const comptedepot = await CompteDepot.findByActeurId(acteurId);
+        if (!comptedepot) return response(res, 401, `Ce compte est en attente de validation !`);
 
         console.log('Chargement des fonds..');
         const fonds = await Fonds.findAll();
@@ -149,7 +139,6 @@ const loadSommaire = async (req, res, next) => {
                     f['r_datevl'] = vl.r_datevl;
                     f['r_taux_redement'] = vl.r_taux_redement;
                     f['r_rendement_positive'] = vl.r_rendement_positive;
-                    
                 }
             }
 
@@ -167,9 +156,9 @@ const loadSommaire = async (req, res, next) => {
         
         return response(res, 200, "Chargement terminé", {
             compte_depot: Number(comptedepot.r_solde_disponible),
-            valeur_portefeuilles,
+            valeur_portefeuilles: valeur_portefeuilles,
             rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
-            // portefeuilles,
+            portefeuilles,
             fonds
         }); 
 
