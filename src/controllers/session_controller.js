@@ -36,55 +36,59 @@ const connect = async (req, res, next) => {
                 if(!valid) return response(res, 401, `Login ou mot de passe incorrect !`);
                 if (acteur.r_statut==0 || acteur.r_date_activation==undefined) return response(res, 401, `Ce compte n'a pas été activé !`);
                 if (acteur.r_statut==-1) return response(res, 401, `Ce compte à été supprimé !`);
-                
-                console.log(`Création de session`);
-                await Session.create({
-                    os: req.headers.os,
-                    adresse_ip: req.headers.adresse_ip,
-                    marque: req.headers.marque,
-                    model: req.headers.model,
-                    acteur: acteur.r_i,
-                    canal: req.headers.app_id
-                }).then(async session => {
 
-                    if (acteur.e_type_acteur && acteur.e_type_acteur=='2') {            // Particulier
+                await CompteDepot.findByActeurId(acteur.r_i).then(async comptedepot => {
+                    if (!comptedepot) return response(res, 401, `Ce compte est en attente de validation !`);
 
-                        console.log(`Chargement des données du client`);
-                        await Particulier.findByActeurId(acteur.r_i).then(async particulier => {
-                            if (!particulier) return response(res, 400, `Une erreur s'est produite à la récupération du compte client !`);
-                            acteur['particulier'] = particulier;
+                    console.log(`Création de session`);
+                    await Session.create({
+                        os: req.headers.os,
+                        adresse_ip: req.headers.adresse_ip,
+                        marque: req.headers.marque,
+                        model: req.headers.model,
+                        acteur: acteur.r_i,
+                        canal: req.headers.app_id
+                    }).then(async session => {
+
+                        if (acteur.e_type_acteur && acteur.e_type_acteur=='2') {            // Particulier
+
+                            console.log(`Chargement des données du client`);
+                            await Particulier.findByActeurId(acteur.r_i).then(async particulier => {
+                                if (!particulier) return response(res, 400, `Une erreur s'est produite à la récupération du compte client !`);
+                                acteur['particulier'] = particulier;
+                            }).catch(err => next(err));
+
+                        } else if (acteur.e_type_acteur && acteur.e_type_acteur=='3') {     // Entreprise
+
+                            console.log(`Chargement des données entreprise`);
+                            await Entreprise.findByActeurId(acteur.r_i).then(async entreprise => {
+                                if (!entreprise) return response(res, 400, `Une erreur s'est produite à la récupération du compte client !`);
+                                acteur['entreprise'] = entreprise;
+                            }).catch(err => next(err));
+                        }
+                        
+                        console.log(`Chargement des documents de l'acteur`);
+                        await Document.findAllByActeurId(acteur.r_i).then(async documents => {
+                            acteur['documents'] = documents;
                         }).catch(err => next(err));
+                        
+                        delete acteur.r_mdp;
+                        delete acteur.e_type_acteur;
+                        delete acteur.r_statut;
+                        delete session.r_statut
+                        delete session.e_acteur;
+                        delete session.e_canal;
 
-                    } else if (acteur.e_type_acteur && acteur.e_type_acteur=='3') {     // Entreprise
-
-                        console.log(`Chargement des données entreprise`);
-                        await Entreprise.findByActeurId(acteur.r_i).then(async entreprise => {
-                            if (!entreprise) return response(res, 400, `Une erreur s'est produite à la récupération du compte client !`);
-                            acteur['entreprise'] = entreprise;
-                        }).catch(err => next(err));
-                    }
-                    
-                    console.log(`Chargement des documents de l'acteur`);
-                    await Document.findAllByActeurId(acteur.r_i).then(async documents => {
-                        acteur['documents'] = documents;
-                    }).catch(err => next(err));
-                    
-                    delete acteur.r_mdp;
-                    delete acteur.e_type_acteur;
-                    delete acteur.r_statut;
-                    delete session.r_statut
-                    delete session.e_acteur;
-                    delete session.e_canal;
-
-                    return response(res, 200, 'Ouverture de session', {
-                        auth_token: jwt.sign(
-                            {session: session.r_reference},
-                            process.env.SESSION_KEY,
-                            // { expiresIn: '24h' }
-                        ),
-                        session: session,
-                        acteur: acteur
-                    });
+                        return response(res, 200, 'Ouverture de session', {
+                            auth_token: jwt.sign(
+                                {session: session.r_reference},
+                                process.env.SESSION_KEY,
+                                // { expiresIn: '24h' }
+                            ),
+                            session: session,
+                            acteur: acteur
+                        });
+                    }).catch(err=>next(err));
                 }).catch(error => next(error));
             }).catch(error => next(error));
         }).catch(error => next(error));
@@ -148,7 +152,7 @@ const loadSommaire = async (req, res, next) => {
             valeur = total + rendement;
 
             cumultaux = cumultaux + taux;
-            valeur_portefeuilles = valeur_portefeuilles + valeur;
+            valeur_portefeuilles = valeur_portefeuilles + valeur
 
             // delete f.r_i
 
@@ -188,14 +192,14 @@ const loadSommaire = async (req, res, next) => {
                             }
                         }
                     }
+
+                    rendement = ((Number(vl.r_valeur_courante) * parts) - total);
+                    valeur = total + rendement;
+                    valeur_p = valeur_p + valeur;
                     
                     if (podate.getTime() <= vldate.getTime()) {
-                        rendement = ((Number(vl.r_valeur_courante) * parts) - total);
-                        valeur = total + rendement;
-                        valeur_p = valeur_p + valeur;
-                        
                         cltp.fcp = f.r_code;
-                        cltp.vldate=vl.r_datevl;
+                        cltp.vldate = vl.r_datevl;
                         cltp.valeur_portefeuille = valeur_p;
                     }
                 }
@@ -218,7 +222,7 @@ const loadSommaire = async (req, res, next) => {
         
         return response(res, 200, "Chargement terminé", {
             compte_depot: Number(comptedepot.r_solde_disponible),
-            valeur_portefeuilles: valeur_portefeuilles,
+            valeur_portefeuilles: Number(valeur_portefeuilles.toFixed(2)),
             rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
             evolution_portefeuilles:evolution,
             fonds

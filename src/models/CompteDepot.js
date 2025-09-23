@@ -34,9 +34,9 @@ const CompteDepot = {
 
         const queryString = `
             UPDATE ${this.tableName} 
-            SET r_solde_disponible=$1, r_date_modif=$2
-            WHERE e_acteur=$3
-            RETURNING r_numero_compte, r_solde_disponible, r_date_creer, r_date_modif`;
+            SET r_solde_disponible=$1, r_date_modif=$2 
+            WHERE e_acteur=$3 
+            RETURNING r_numero_compte, r_solde_disponible, r_date_creer, r_date_modif`; 
         const res = await db.query(queryString, [montant, new Date(), acteur]);
         
         return res.rows[0];
