@@ -2,6 +2,7 @@ const errorhandling = require('./src/middlewares/error_handler');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const swaggerUI = require('swagger-ui-express');
 const swaggerDocument = require('./swagger-outpout.json');
@@ -40,6 +41,9 @@ app.use(base_path + '/acteurs/portefeuilles', portefeuilleRoutes);
 app.use(base_path + '/acteurs/sommaire', sommaireRoutes);
 
 app.use(base_path + '/webhooks', webhookRoutes); 
+
+app.use(`/temp`, express.static(path.join(__dirname, 'temp'))); 
+app.use(`/uploads`, express.static(path.join(__dirname, 'uploads'))); 
 
 // Error handling middlware 
 
