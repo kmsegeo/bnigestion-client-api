@@ -1,6 +1,8 @@
 const db = require('../config/database');
 const Message = require('../models/Message');
+const Portefeuille = require('../models/Portefeuille');
 const TypeOperation = require('../models/TypeOperation');
+const ValeurLiquidative = require('../models/ValeurLiquidative');
 
 const Utils = {
     
@@ -129,6 +131,39 @@ const Utils = {
 
             }).catch(err => console.error(err)); 
         }).catch(err => console.error(err)); 
+    },
+
+    async calculEvolutionPortefeuille(acteurid, idfonds, date) {
+
+        let portefeuilles = await Portefeuille.findUntilDate(acteurid, idfonds, date);
+        let vl = await ValeurLiquidative.FindLastOnTheDate(idfonds, date);
+
+        let investis = 0;
+        let parts = 0;
+        let rendement = 0;
+        let valeur = 0;
+
+        for (let p of portefeuilles) {
+            parts = parts + Number(p.r_nombre_parts);
+            investis = investis + Number(p.r_montant_placement);
+        }
+
+        if (vl) {
+            valeur = parts * Number(vl.r_valeur_courante);
+            rendement = Number((valeur - investis).toFixed(2));
+        }
+
+        let evolution =  {
+            date: date,
+            nombre_parts: parts,
+            nette_investis: investis,
+            rendement: rendement,
+            valeur_portefeuille: valeur
+        }
+
+        if (portefeuilles.length>0) return evolution;
+
+        return 
     }
 
 }

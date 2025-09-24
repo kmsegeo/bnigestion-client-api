@@ -48,8 +48,8 @@ const Portefeuille = {
         return res.rows[0];
     },
 
-    async findUntilDate(acteurId, date) {
-        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_date_creer<=$2 AND r_statut=$3 ORDER BY r_i ASC`, [acteurId, date, 1]);
+    async findUntilDate(acteur_id, fonds_id, date) {
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND e_fonds=$2 AND r_date_creer<=$3 AND r_statut=$4 ORDER BY r_i ASC`, [acteur_id, fonds_id, date, 1]);
         return res.rows;
     },
 

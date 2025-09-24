@@ -28,6 +28,11 @@ const ValeurLiquidative = {
     //     return (await res).rows;
     // },
 
+    async FindLastOnTheDate(fonds_id, date) {
+        const res = db.query(`SELECT * FROM ${this.tableName} WHERE e_fonds=$1 AND r_date_creer<=$2 ORDER BY r_i desc LIMIT 1`, [fonds_id, date]);
+        return (await res).rows[0];
+    },
+
     async findById(id) {
         const res = db.query(`SELECT 
             r_valeur_courante, 
