@@ -1,7 +1,7 @@
 const response = require('../middlewares/response');
-const fs = require('fs');
+// const fs = require('fs');
 const path = require('path');
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+// const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const default_data = require('../config/default_data');
 const Acteur = require('../models/Acteur');
 const { Particulier } = require('../models/Client');
@@ -425,66 +425,66 @@ const exportActeurOperation = async (req, res, next) => {
 
     console.log("Génération du fichier PDF des opération...");
     
-    const dateDebut = req.params.debut;
-    const dateFin = req.params.fin;
-    const acteurId = req.session.e_acteur;
+//     const dateDebut = req.params.debut;
+//     const dateFin = req.params.fin;
+//     const acteurId = req.session.e_acteur;
 
-    try {
+//     try {
 
-        // Charger le PDF source
-        const pdfPath = path.join(__dirname, '../files', 'TEMPLATE_RELEVE_CLIENT.pdf');
-        if (!fs.existsSync(pdfPath)) return response(res, 404, "Le fichier PDF source est introuvable.");
+//         // Charger le PDF source
+//         const pdfPath = path.join(__dirname, '../files', 'TEMPLATE_RELEVE_CLIENT.pdf');
+//         if (!fs.existsSync(pdfPath)) return response(res, 404, "Le fichier PDF source est introuvable.");
         
-        const existingPdfBytes = fs.readFileSync(pdfPath);
-        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+//         const existingPdfBytes = fs.readFileSync(pdfPath);
+//         const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-        const pages = pdfDoc.getPages();
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+//         const pages = pdfDoc.getPages();
+//         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         
-        const fontSize = 10;
+//         const fontSize = 10;
         
-        const fillcolor = rgb(0, 0, 0); // Orange
-        const today = new Date();
+//         const fillcolor = rgb(0, 0, 0); // Orange
+//         const today = new Date();
 
-         // ✍️ Écriture à des positions arbitraires (à ajuster selon le PDF)
+//          // ✍️ Écriture à des positions arbitraires (à ajuster selon le PDF)
 
-        /* [PAGE 1] */
-        const firstPage = pages[0];
+//         /* [PAGE 1] */
+//         const firstPage = pages[0];
 
-        /* INFORMATION GENERALES */
-        firstPage.drawText(today.toLocaleDateString(), { x: 154, y: 672, size: fontSize, font, color: fillcolor });
+//         /* INFORMATION GENERALES */
+//         firstPage.drawText(today.toLocaleDateString(), { x: 154, y: 672, size: fontSize, font, color: fillcolor });
 
-         /* FIN */
+//          /* FIN */
 
-        // 💾 Sauvegarde locale du fichier
+//         // 💾 Sauvegarde locale du fichier
 
-        const pdfBytes = await pdfDoc.save();
-        const fileName = `releve_${dateDebut}_${dateFin}.pdf`;
-        // const outputPath = path.join(__dirname, '../../temp', fileName);
-        // fs.writeFileSync(outputPath, pdfBytes);
+//         const pdfBytes = await pdfDoc.save();
+//         const fileName = `releve_${dateDebut}_${dateFin}.pdf`;
+//         // const outputPath = path.join(__dirname, '../../temp', fileName);
+//         // fs.writeFileSync(outputPath, pdfBytes);
 
-        // Sauvegarde du chemin dans la db
+//         // Sauvegarde du chemin dans la db
 
-        const chemin_fichier = `${req.protocol}://${req.get('host')}//bnigestion_api/v1/temp/${fileName}`;
+//         const chemin_fichier = `${req.protocol}://${req.get('host')}//bnigestion_api/v1/temp/${fileName}`;
 
-        // const result = {
-        //     r_nom_fichier: fileName,
-        //     r_chemin_fichier: chemin_fichier
-        // };
+//         // const result = {
+//         //     r_nom_fichier: fileName,
+//         //     r_chemin_fichier: chemin_fichier
+//         // };
 
-        // return response(res, 200, "Fichier releve généré avec succès.", result);
+        return response(res, 200, "Exportation de fichier de relever");
 
-        // 📤 Aperçu direct dans le navigateur
+//         // 📤 Aperçu direct dans le navigateur
 
-        console.log(`Fichier releve généré avec succès: ${fileName}`);
+//         console.log(`Fichier releve généré avec succès: ${fileName}`);
 
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename=${fileName}`);
-        res.send(pdfBytes);
+//         res.setHeader('Content-Type', 'application/pdf');
+//         res.setHeader('Content-Disposition', `inline; filename=${fileName}`);
+//         res.send(pdfBytes);
 
-    } catch (error) {
-        next(error)
-    }
+//     } catch (error) {
+//         next(error)
+//     }
 }
 
 module.exports = {
