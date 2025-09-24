@@ -51,6 +51,7 @@ const getAllActeurOperations = async (req, res, next) => {
                     op['r_statut'] = operation_statuts[op.r_statut];
                     delete op.r_i
                     delete op.e_acteur
+                    delete op.e_type_operation
                 }
             }
         }

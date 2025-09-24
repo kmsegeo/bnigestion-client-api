@@ -1,8 +1,10 @@
+const e = require('express');
 const default_data = require('../config/default_data');
 const response = require('../middlewares/response');
 const Fonds = require('../models/Fonds');
 const Portefeuille = require('../models/Portefeuille');
 const ValeurLiquidative = require('../models/ValeurLiquidative');
+const { propfind } = require('../routes/ressources_routes');
 
 const portefeuille_statuts = default_data.portefeuille_statuts
 
@@ -73,6 +75,7 @@ const getAllPortefeuilles = async (req, res, next) => {
             cumultaux = cumultaux + taux;
             valeur_portefeuilles = valeur_portefeuilles + valeur;
 
+            portefeuille['r_code_fonds'] = f.r_code;
             portefeuille['r_intitule_fonds'] = f.r_intitule;
             portefeuille['t_type_fonds'] = f.r_type;
             portefeuille['r_taux_allocation'] = f.r_taux_allocation;
@@ -174,9 +177,137 @@ const getRejectedPortefeuilles = async (req, res, next) => {
     }
 }
 
+const getOnePortefeuilleChart = async (req, res, next) => {
+
+    /**
+     * [x] Créer une plage de date selon la période souhaité et remonter celle-ci
+     * [] Récupérer le cumule des montant enterieur du fonds souscrit à la date de depart de la periode définit
+     * [] Pour le fonds choisi, déduite la valeur liquidative à une date définit
+     * [] Cumuler les montants des fonds souscrit et calculer l'évolution sur la période
+     */
+
+    try {
+
+        console.log(`Chargement des données du chart..`);
+        const periods = ['semaine', 'mois', 'annee', '5ans'];
+        
+        let period = req.query.periode
+        if (!period) period=periods[0];
+        
+        const acteurid = req.session.e_acteur;
+        const code_fonds = req.params.code_fonds;
+        const fonds = await Fonds.findByCode(code_fonds);
+
+        console.log('code_fonds:', code_fonds, '\nperiode:', period);
+
+        let evolutions = [];
+
+        let message = '';
+        const today = new Date();
+
+        if (!periods.includes(period)) 
+            return response(res, 400, `La période n'est pas correctement définit !`);
+        
+        if (period==`jour`) {          // 24h
+
+            console.log(`Chargement des données de la journée`);
+            return response(res, 403, `Les mises à jours sont hebdomadaires !`);
+            
+        } else if (period==`semaine`) {  // 7 jours
+            message = `Chargement des données des 7 derniers jours`;       
+
+            for (let i=7; i>=0; i--) {
+                let date = new Date();
+                date.setDate(date.getDate() - i);
+                
+                let e =  {
+                    date: date,
+                    nette_investis: 0,
+                    rendement: 0,
+                    valeur_portefeuille: 0
+                }
+
+                evolutions.push(e);
+            }
+            
+        } else if (period==`mois`) {     // 30 jours
+            
+            let fisrtloop = true;
+            message = `Chargement des données des 30 derniers jours`;
+            
+            for (let i=30; i>=0; i--) {
+
+                let date = new Date();
+                date.setDate(date.getDate() - i);
+
+                let e =  {
+                    date: date,
+                    nette_investis: 0,
+                    rendement: 0,
+                    valeur_portefeuille: 0
+                }
+
+                const start_p = null;
+
+                if (fisrtloop) {
+                    fisrtloop = false;
+                    const start_p = await Portefeuille.findUntilDate(acteurid, '2025-09-04T11:02:05.393Z');
+                }
+
+                evolutions.push(e);
+            }            
+
+        } else if (period==`annee`) {   // 12 mois
+            message = `Chargement des données des 12 derniers mois`;
+
+            for (let i=12; i>=0; i--) {
+                let date = new Date();
+                date.setMonth(date.getMonth() - i);
+                
+                let e =  {
+                    date: date,
+                    nette_investis: 0,
+                    rendement: 0,
+                    valeur_portefeuille: 0
+                }
+
+                evolutions.push(e);
+            }
+
+        } else if (period==`5ans`) {   // 5 ans
+            message = `Chargement des données des 5 dernières années`;
+
+            for (let i=5; i>=0; i--) {
+                let date = new Date();
+                date.setFullYear(date.getFullYear() - i);
+                
+                let e =  {
+                    date: date,
+                    nette_investis: 0,
+                    rendement: 0,
+                    valeur_portefeuille: 0
+                }
+
+                evolutions.push(e);
+            }
+
+        } else {                        // par vl
+
+        }
+        
+        delete fonds.r_i
+
+        return response(res, 200, message, {periode: period, fonds, evolutions});
+
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getAllPortefeuilles,
     getUnactivePortefeuilles,
     getActivesPortefeuilles,
-    getRejectedPortefeuilles
+    getRejectedPortefeuilles,
+    getOnePortefeuilleChart
 }

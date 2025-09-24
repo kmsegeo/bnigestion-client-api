@@ -43,7 +43,16 @@ const Portefeuille = {
         return (await res).rows[0];
     },
     
-    async getPortefeuilleById() {},
+    async getPortefeuilleById(id) {
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE r_i=$1`, [id]);
+        return res.rows[0];
+    },
+
+    async findUntilDate(acteurId, date) {
+        const res = await db.query(`SELECT * FROM ${this.tableName} WHERE e_acteur=$1 AND r_date_creer<=$2 AND r_statut=$3 ORDER BY r_i ASC`, [acteurId, date, 1]);
+        return res.rows;
+    },
+
     async updatePortefeuille() {},
     async deletePortefeuille() {},
 
