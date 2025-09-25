@@ -182,20 +182,23 @@ const getOnePortefeuilleChart = async (req, res, next) => {
 
     /**
      * [x] Créer une plage de date selon la période souhaité et remonter celle-ci
-     * [] Récupérer le cumule des montant enterieur du fonds souscrit à la date de depart de la periode définit
-     * [] Pour le fonds choisi, déduite la valeur liquidative à une date définit
-     * [] Cumuler les montants des fonds souscrit et calculer l'évolution sur la période
+     * [x] Récupérer le cumule des montant enterieur du fonds souscrit à la date de depart de la periode définit
+     * [x] Pour le fonds choisi, déduite la valeur liquidative à une date définit
+     * [x] Cumuler les montants des fonds souscrit et calculer l'évolution sur la période
      */
+
+    console.log(`Chargement des données du chart..`);
+
+    const periods = ['semaine', 'mois', 'annee', '5ans'];
 
     try {
 
-        console.log(`Chargement des données du chart..`);
-        const periods = ['semaine', 'mois', 'annee', '5ans'];
+        const acteurid = req.session.e_acteur;
         
         let period = req.query.periode
         if (!period) period=periods[0];
+
         
-        const acteurid = req.session.e_acteur;
         const code_fonds = req.params.code_fonds;
         const fonds = await Fonds.findByCode(code_fonds);
 
@@ -266,10 +269,115 @@ const getOnePortefeuilleChart = async (req, res, next) => {
     }
 }
 
+const getGlobalPortefeuilleChart = async (req, res, next) => { 
+
+    console.log(`Chargement des données du chart..`);
+    const periods = ['semaine', 'mois', 'annee', '5ans'];
+
+    try {
+        const acteurid = req.session.e_acteur;
+
+        let period = req.query.periode
+        if (!period) period=periods[0];
+        
+        const fonds = await Fonds.findAll();
+
+        let evolutions = [];
+        let message = '';
+
+        if (!periods.includes(period)) 
+            return response(res, 400, `La période n'est pas correctement définit !`);
+        
+        if (period==`jour`) {          // 24h
+            console.log(`Chargement des données de la journée`);
+            return response(res, 403, `Les mises à jours sont hebdomadaires !`);
+            
+        } else if (period==`semaine`) {  // 7 jours
+            message = `Chargement des données des 7 derniers jours`;       
+
+            for (let i=7; i>=0; i--) {
+                let date = new Date();
+                date.setDate(date.getDate() - i);
+                let e = await calculEvolutionsCumulates(acteurid, date);
+                if(e) evolutions.push(e);
+            }
+            
+        } else if (period==`mois`) {     // 30 jours
+            message = `Chargement des données des 30 derniers jours`;
+            
+            for (let i=30; i>=0; i--) {
+                let date = new Date();
+                date.setDate(date.getDate() - i);
+                let e = await calculEvolutionsCumulates(acteurid, date);
+                if(e) evolutions.push(e);
+            }            
+
+        } else if (period==`annee`) {   // 12 mois
+            message = `Chargement des données des 12 derniers mois`;
+
+            for (let i=12; i>=0; i--) {
+                let date = new Date();
+                date.setMonth(date.getMonth() - i);
+                let e = await calculEvolutionsCumulates(acteurid, date);
+                if(e) evolutions.push(e);
+            }
+
+        } else if (period==`5ans`) {   // 5 ans
+            message = `Chargement des données des 5 dernières années`;
+
+            for (let i=5; i>=0; i--) {
+                let date = new Date();
+                date.setFullYear(date.getFullYear() - i);
+                let e = await calculEvolutionsCumulates(acteurid, date);
+                if(e) evolutions.push(e);
+            }
+
+        } else {                        // par vl
+
+        }
+
+        async function calculEvolutionsCumulates(acteurid, date) {
+
+            let e = {};
+            let hasData = false;
+            let nette_investis = 0;
+            let rendement = 0;
+            let valeur_portefeuille = 0;
+
+            for (let f of fonds) {
+                let evolution = await Utils.calculEvolutionPortefeuille(acteurid, f.r_i, date);
+                if(evolution) {
+                    nette_investis = nette_investis + Number(evolution.nette_investis);
+                    rendement = rendement + Number(evolution.rendement);
+                    valeur_portefeuille = valeur_portefeuille + Number(evolution.valeur_portefeuille);
+                    hasData = true;
+                };
+            }
+
+            if (hasData) {
+                e['date'] = date;
+                e['nette_investis'] = nette_investis;
+                e['rendement'] = rendement;
+                e['valeur_portefeuille'] = valeur_portefeuille;
+                return e;
+            }
+            
+            return null;
+        }
+        
+        delete fonds.r_i        
+        return response(res, 200, message, {periode: period, evolution_portefeuilles: evolutions});
+
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getAllPortefeuilles,
     getUnactivePortefeuilles,
     getActivesPortefeuilles,
     getRejectedPortefeuilles,
-    getOnePortefeuilleChart
+    getOnePortefeuilleChart,
+    getGlobalPortefeuilleChart
 }

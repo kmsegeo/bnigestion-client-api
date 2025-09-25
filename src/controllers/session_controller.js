@@ -116,8 +116,8 @@ const loadSommaire = async (req, res, next) => {
         console.log('Chargement des portefeuilles');
         const portefeuilles = await Portefeuille.findAllByActeurId(acteurId);
 
+        let evolutions = [];        
         let valeur_portefeuilles = 0;
-        let evolution_portefeuilles = [];
         let cumultaux = 0;
         let cptfd = 0;
 
@@ -158,74 +158,44 @@ const loadSommaire = async (req, res, next) => {
 
             cptfd +=1;
         }
+        
+        console.log(`Chargement des données des 30 derniers jours`);
+            
+        for (let i=30; i>=0; i--) {
+            let date = new Date();
+            date.setDate(date.getDate() - i);
 
-        const vls = await ValeurLiquidative.findAll();
-        let cltps = []
-
-        for (let vl of vls) {
-
-            let cltp = {}
-            let valeur_p = 0;
+            let e = {};
+            let hasData = false;
+            let nette_investis = 0;
+            let rendement = 0;
+            let valeur_portefeuille = 0;
 
             for (let f of fonds) {
-
-                let cpt = 0;
-                let parts = 0;
-                let total = 0;
-                let rendement = 0;
-                let valeur = 0;
-
-                if (f.r_i==vl.e_fonds) {
-
-                    let vldate = new Date(vl.r_datevl);
-                    let podate = null;
-                   
-                    for(let p of portefeuilles) {
-                        if (f.r_i==p.e_fonds) {
-                            if (p.r_statut==1) {
-                                podate = new Date(p.r_date_creer);
-                                // if (podate.getTime() <= vldate.getTime()) {
-                                    parts = Number(parts) + Number(p.r_nombre_parts);
-                                    total = Number(total) + Number(p.r_montant_placement);
-                                    cpt +=1;
-                                // }
-                            }
-                        }
-                    }
-
-                    rendement = ((Number(vl.r_valeur_courante) * parts) - total);
-                    valeur = total + rendement;
-                    valeur_p = valeur_p + valeur;
-                    
-                    if (podate.getTime() <= vldate.getTime()) {
-                        cltp.fcp = f.r_code;
-                        cltp.vldate = vl.r_datevl;
-                        cltp.valeur_portefeuille = valeur_p;
-                    }
-                }
+                let evolution = await Utils.calculEvolutionPortefeuille(acteurId, f.r_i, date);
+                if(evolution) {
+                    nette_investis = nette_investis + Number(evolution.nette_investis);
+                    rendement = rendement + Number(evolution.rendement);
+                    valeur_portefeuille = valeur_portefeuille + Number(evolution.valeur_portefeuille);
+                    hasData = true;
+                };
             }
 
-            cltps.push(cltp);
-        }
-
-        let evolution = [];
-        let old = {}
-        for (let cur of cltps) {
-            let curdate = new Date(cur.vldate)
-            let olddate = new Date(old.vldate)
-            if (curdate.getTime()==olddate.getTime()) {
-                let valeur = (Number(cur.valeur_portefeuille) + Number(old.valeur_portefeuille)).toFixed(2);
-                evolution.push({date:curdate, valeur: Number(valeur)});
+            if (hasData) {
+                e['date'] = date;
+                e['nette_investis'] = nette_investis;
+                e['rendement'] = rendement;
+                e['valeur_portefeuille'] = valeur_portefeuille;
+                evolutions.push(e);
             }
-            old = cur;
-        }
+        } 
         
         return response(res, 200, "Chargement terminé", {
             compte_depot: Number(comptedepot.r_solde_disponible),
             valeur_portefeuilles: Number(valeur_portefeuilles.toFixed(2)),
             rendement_global: (cumultaux/cptfd).toFixed(2) + "%",
-            evolution_portefeuilles:evolution,
-            fonds
+            fonds,
+            evolution_portefeuilles:evolutions,
         }); 
 
     } catch (error) {

@@ -428,45 +428,88 @@ const exportActeurOperation = async (req, res, next) => {
     const dateDebut = req.params.debut;
     const dateFin = req.params.fin;
     const acteurId = req.session.e_acteur;
+    
     try {
+
+        const selectedPages =  [1];
+
         // Charger le PDF source
-        const pdfPath = path.join(__dirname, '../files', 'TEMPLATE_RELEVE_CLIENT.pdf');
+
+        const pdfPath = path.join(__dirname, '../files', 'RELEVE_FCP_MODEL.pdf');
         if (!fs.existsSync(pdfPath)) return response(res, 404, "Le fichier PDF source est introuvable.");
-     
+        
         const existingPdfBytes = fs.readFileSync(pdfPath);
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
-        const pages = pdfDoc.getPages();
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-     
+
+        const outputPdf = await PDFDocument.create();
+
+        // Copier uniquement les pages sélectionnées
+        const totalPages = pdfDoc.getPageCount();
+
+        const pagesToKeep = selectedPages.length > 0
+        ? selectedPages.filter(n => n >= 1 && n <= totalPages).map(n => n - 1) // 0-based
+        : [...Array(totalPages).keys()]; // tout garder si rien spécifié
+
+        for (const pageIndex of pagesToKeep) {
+            const [copiedPage] = await outputPdf.copyPages(pdfDoc, [pageIndex]);
+            outputPdf.addPage(copiedPage);
+        }
+        
+        const font = await outputPdf.embedFont(StandardFonts.Helvetica);
+
         const fontSize = 10;
-     
-        const fillcolor = rgb(0, 0, 0); // Orange
-        const today = new Date();
-         // ✍️ Écriture à des positions arbitraires (à ajuster selon le PDF)
+        const fillcolor = rgb(0, 0, 0);
+        const rightMargin = 500;
+        
+        const today = new Date(); 
+
+        function drawRightAligned(page, text, y) {
+            const textWidth = font.widthOfTextAtSize(text, fontSize);
+            const xPosition = rightMargin - textWidth;
+            page.drawText(text, { x: xPosition, y, size: fontSize, font, color: rgb(1, 0.55, 0) });
+        }
+
+        // ✍️ Écriture à des positions arbitraires (à ajuster selon le PDF)
+
+        const pages = outputPdf.getPages();
+
         /* [PAGE 1] */
+
         const firstPage = pages[0];
-        /* INFORMATION GENERALES */
-        firstPage.drawText(today.toLocaleDateString(), { x: 154, y: 672, size: fontSize, font, color: fillcolor });
-         /* FIN */
+
+        /* ENETE DE RELEVE */
+        firstPage.drawText(`KOUAME KOUADIO SERGE`, {x: 282, y: 708, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`COCODY, 2 PLATEAUX MOBILE`, {x: 282, y: 690, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`ABIDJAN`, {x: 282, y: 673, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`Compte N° : ${today.toLocaleDateString()}`, {x: 282, y: 650, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(today.toLocaleDateString(), {x: 282, y: 604, size: fontSize, font, color: fillcolor});
+        
+        /* RECAP. DE FONDS */
+        firstPage.drawText(`FCP OBLIG SECURITE`, {x: 52, y: 478, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`135`, {x: 230, y: 478, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`11 430`, {x: 280, y: 478, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`10 929`, {x: 336, y: 478, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`67 635`, {x: 394, y: 478, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`4,58`, {x: 458, y: 478, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`1 143 050`, {x: 506, y: 478, size: fontSize, font, color: fillcolor});
+
+
+        /* FIN */
+
         // 💾 Sauvegarde locale du fichier
-        const pdfBytes = await pdfDoc.save();
-        const fileName = `releve_${dateDebut}_${dateFin}.pdf`;
-        // const outputPath = path.join(__dirname, '../../temp', fileName);
-        // fs.writeFileSync(outputPath, pdfBytes);
-        // Sauvegarde du chemin dans la db
-        const chemin_fichier = `${req.protocol}://${req.get('host')}//bnigestion_api/v1/temp/${fileName}`;
-        // const result = {
-        //     r_nom_fichier: fileName,
-        //     r_chemin_fichier: chemin_fichier
-        // };
+        const finalBytes = await outputPdf.save();
+        // const fileName = `_filtered.pdf`;
+        // const outputPath = path.join(__dirname, '../../uploads', fileName);
+        // fs.writeFileSync(outputPath, finalBytes);
+        // const chemin_fichier = `${req.protocol}://${req.get('host')}//bnigestion_api/v1/temp/${fileName}`;
+        
+        console.log("Exportation de fichier de relever réussi")
 
-        //  return response(res, 200, "Exportation de fichier de relever");
+          // 📤 Aperçu direct dans le navigateur
 
-        // 📤 Aperçu direct dans le navigateur
-        console.log(`Fichier releve généré avec succès: ${fileName}`);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename=${fileName}`);
-        res.send(pdfBytes);
+        res.setHeader('Content-Disposition', 'inline; filename=filled_preview.pdf');
+        res.send(finalBytes);
 
     } catch (error) {
         next(error)
