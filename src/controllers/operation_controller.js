@@ -455,18 +455,18 @@ const exportActeurOperation = async (req, res, next) => {
             outputPdf.addPage(copiedPage);
         }
         
-        const font = await outputPdf.embedFont(StandardFonts.Helvetica);
+        const helvetica = await outputPdf.embedFont(StandardFonts.Helvetica);
+        const helveticaBold = await outputPdf.embedFont(StandardFonts.HelveticaBold);
 
         const fontSize = 10;
         const fillcolor = rgb(0, 0, 0);
-        const rightMargin = 500;
         
         const today = new Date(); 
 
-        function drawRightAligned(page, text, y) {
+        function drawRightAligned(page, rightMargin, positionY, text, fontSize, font, fillcolor) {
             const textWidth = font.widthOfTextAtSize(text, fontSize);
             const xPosition = rightMargin - textWidth;
-            page.drawText(text, { x: xPosition, y, size: fontSize, font, color: rgb(1, 0.55, 0) });
+            page.drawText(text, { x: xPosition, y: positionY, size: fontSize, font, color: fillcolor});
         }
 
         // ✍️ Écriture à des positions arbitraires (à ajuster selon le PDF)
@@ -478,21 +478,59 @@ const exportActeurOperation = async (req, res, next) => {
         const firstPage = pages[0];
 
         /* ENETE DE RELEVE */
-        firstPage.drawText(`KOUAME KOUADIO SERGE`, {x: 282, y: 708, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`COCODY, 2 PLATEAUX MOBILE`, {x: 282, y: 690, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`ABIDJAN`, {x: 282, y: 673, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`Compte N° : ${today.toLocaleDateString()}`, {x: 282, y: 650, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(today.toLocaleDateString(), {x: 282, y: 604, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`KOUAME KOUADIO SERGE`, {x: 282, y: 708, size: fontSize, font: helvetica, color: fillcolor});
+        firstPage.drawText(`COCODY, 2 PLATEAUX MOBILE`, {x: 282, y: 690, size: fontSize, font: helvetica, color: fillcolor});
+        firstPage.drawText(`ABIDJAN`, {x: 282, y: 673, size: fontSize, font: helvetica, color: fillcolor});
+        firstPage.drawText(`Compte N° : 123 456 789`, {x: 282, y: 650, size: fontSize, font: helveticaBold, color: fillcolor});
+        firstPage.drawText(today.toLocaleDateString(), {x: 282, y: 600, size: 11, font: helveticaBold, color: fillcolor});
         
         /* RECAP. DE FONDS */
-        firstPage.drawText(`FCP OBLIG SECURITE`, {x: 52, y: 478, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`135`, {x: 230, y: 478, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`11 430`, {x: 280, y: 478, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`10 929`, {x: 336, y: 478, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`67 635`, {x: 394, y: 478, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`4,58`, {x: 458, y: 478, size: fontSize, font, color: fillcolor});
-        firstPage.drawText(`1 143 050`, {x: 506, y: 478, size: fontSize, font, color: fillcolor});
+        firstPage.drawText(`FCP OBLIG SECURITE`, {x: 52, y: 478, size: fontSize, font: helvetica, color: fillcolor});
 
+        drawRightAligned(firstPage, 263, 478, `135`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 319, 478, `11 430`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 375, 478, `10 929`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 432, 478, `67 635`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 493, 478, `4,58`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 550, 478, `1 143 050`, fontSize, helveticaBold, fillcolor);
+
+        drawRightAligned(firstPage, 554, 438, `1 143 050`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 554, 420, `8 355`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 554, 400, `1 551 405`, fontSize, helveticaBold, fillcolor);
+
+        /* TABLEAU DE DETAILS */
+
+        firstPage.drawText(today.toLocaleDateString(), {x: 292, y: 334, size: 12, font: helveticaBold, color: fillcolor});
+        firstPage.drawText(dateDebut, {x: 358, y: 297, size: 10, font: helvetica, color: fillcolor});
+        firstPage.drawText(dateFin, {x: 442, y: 297, size: 10, font: helvetica, color: fillcolor});
+
+        firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 250, size: 10, font: helveticaBold, color: fillcolor});
+        firstPage.drawText(`Solde Initial`, {x: 122, y: 250, size: 10, font: helveticaBold, color: fillcolor});
+        drawRightAligned(firstPage, 548, 250, `0`, fontSize, helveticaBold, fillcolor);
+        
+        firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 230, size: 10, font: helvetica, color: fillcolor});
+        firstPage.drawText(`Versements Dépôt Espèces`, {x: 122, y: 230, size: 10, font: helvetica, color: fillcolor});
+        drawRightAligned(firstPage, 414, 230, `0`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 478, 230, `1 500 000`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 548, 230, `1 500 000`, fontSize, helvetica, fillcolor);
+
+        firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 210, size: 10, font: helvetica, color: fillcolor});
+        firstPage.drawText(`Souscriptions  FCP OBLIG SECURITE - 135 Parts`, {x: 122, y: 210, size: 10, font: helvetica, color: fillcolor});
+        drawRightAligned(firstPage, 414, 210, `1 475 415`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 478, 210, `0`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 548, 210, `24 585`, fontSize, helvetica, fillcolor);
+
+        firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 190, size: 10, font: helvetica, color: fillcolor});
+        firstPage.drawText(`Retraits Frais de souscription`, {x: 122, y: 190, size: 10, font: helvetica, color: fillcolor});
+        drawRightAligned(firstPage, 414, 190, `1 475 415`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 478, 190, `0`, fontSize, helvetica, fillcolor);
+        drawRightAligned(firstPage, 548, 190, `24 585`, fontSize, helvetica, fillcolor);
+
+        firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 170, size: 10, font: helveticaBold, color: fillcolor});
+        firstPage.drawText(`Solde liquidité`, {x: 122, y: 170, size: 10, font: helveticaBold, color: fillcolor});
+        drawRightAligned(firstPage, 414, 170, `0`, fontSize, helveticaBold, fillcolor);
+        drawRightAligned(firstPage, 478, 170, `0`, fontSize, helveticaBold, fillcolor);
+        drawRightAligned(firstPage, 548, 170, `8 355`, fontSize, helveticaBold, fillcolor);
 
         /* FIN */
 

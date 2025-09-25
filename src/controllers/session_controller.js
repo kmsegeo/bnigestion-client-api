@@ -159,9 +159,9 @@ const loadSommaire = async (req, res, next) => {
             cptfd +=1;
         }
         
-        console.log(`Chargement des données des 30 derniers jours`);
+        console.log(`Chargement des données des 7 derniers jours`);
             
-        for (let i=30; i>=0; i--) {
+        for (let i=6; i>=0; i--) {
             let date = new Date();
             date.setDate(date.getDate() - i);
 

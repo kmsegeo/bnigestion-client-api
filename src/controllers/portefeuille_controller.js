@@ -219,7 +219,7 @@ const getOnePortefeuilleChart = async (req, res, next) => {
         } else if (period==`semaine`) {  // 7 jours
             message = `Chargement des données des 7 derniers jours`;       
 
-            for (let i=7; i>=0; i--) {
+            for (let i=6; i>=0; i--) {
                 let date = new Date();
                 date.setDate(date.getDate() - i);
                 let e = await Utils.calculEvolutionPortefeuille(acteurid, fonds.r_i, date);
@@ -230,7 +230,6 @@ const getOnePortefeuilleChart = async (req, res, next) => {
             message = `Chargement des données des 30 derniers jours`;
             
             for (let i=30; i>=0; i--) {
-
                 let date = new Date();
                 date.setDate(date.getDate() - i);
                 let e = await Utils.calculEvolutionPortefeuille(acteurid, fonds.r_i, date);
@@ -240,7 +239,7 @@ const getOnePortefeuilleChart = async (req, res, next) => {
         } else if (period==`annee`) {   // 12 mois
             message = `Chargement des données des 12 derniers mois`;
 
-            for (let i=12; i>=0; i--) {
+            for (let i=11; i>=0; i--) {
                 let date = new Date();
                 date.setMonth(date.getMonth() - i);
                 let e = await Utils.calculEvolutionPortefeuille(acteurid, fonds.r_i, date);
@@ -250,7 +249,7 @@ const getOnePortefeuilleChart = async (req, res, next) => {
         } else if (period==`5ans`) {   // 5 ans
             message = `Chargement des données des 5 dernières années`;
 
-            for (let i=5; i>=0; i--) {
+            for (let i=4; i>=0; i--) {
                 let date = new Date();
                 date.setFullYear(date.getFullYear() - i);
                 let e = await Utils.calculEvolutionPortefeuille(acteurid, fonds.r_i, date);
