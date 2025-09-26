@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const TypeDocument = require('./TypeDocument');
 const uuid = require('uuid');
 
 const Document = {
@@ -14,7 +15,7 @@ const Document = {
                 td.r_chemin_fichier,
                 td.r_date_creer,
                 td.r_date_modif
-            FROM ${this.tableName} As td, t_type_document As tt  
+            FROM ${this.tableName} As td, ${TypeDocument.tableName} As tt  
             WHERE td.e_type_document=tt.r_i AND td.r_statut=$1`, [1]);
         return res.rows;
     },
@@ -29,7 +30,7 @@ const Document = {
                 td.r_chemin_fichier,
                 td.r_date_creer,
                 td.r_date_modif
-            FROM ${this.tableName} As td, t_type_document As tt  
+            FROM ${this.tableName} As td, ${TypeDocument.tableName} As tt  
             WHERE td.e_type_document=tt.r_i AND td.e_type_document=$1 AND td.r_statut=$2`, [type_id, 1]);
         return res.rows
     },
@@ -67,7 +68,7 @@ const Document = {
                 td.r_chemin_fichier,
                 td.r_date_creer,
                 td.r_date_modif
-            FROM ${this.tableName} As td, t_type_document As tt  
+            FROM ${this.tableName} As td, ${TypeDocument.tableName} As tt  
             WHERE td.e_type_document=tt.r_i AND td.r_i=$1 AND td.r_statut=$2`, [id, 1]);
         return res.rows[0];
     },
@@ -98,7 +99,7 @@ const Document = {
                 td.r_chemin_fichier,
                 td.r_date_creer,
                 td.r_date_modif
-            FROM ${this.tableName} As td, t_type_document As tt 
+            FROM ${this.tableName} As td, ${TypeDocument.tableName} As tt 
             WHERE td.e_type_document=tt.r_i AND td.r_reference=$1 AND td.r_statut=$2`, [ref, 1]);
         return res.rows[0]
     },
@@ -113,7 +114,7 @@ const Document = {
                 td.r_chemin_fichier,
                 td.r_date_creer,
                 td.r_date_modif
-            FROM ${this.tableName} As td, t_type_document As tt  
+            FROM ${this.tableName} As td, ${TypeDocument.tableName} As tt  
             WHERE td.e_type_document=tt.r_i AND td.e_acteur=$1 AND td.r_statut=$2`, [acteur_id, 1]);
         return res.rows;
     },
@@ -129,7 +130,7 @@ const Document = {
                 td.r_chemin_fichier,
                 td.r_date_creer,
                 td.r_date_modif
-            FROM ${this.tableName} As td, t_type_document As tt  
+            FROM ${this.tableName} As td, ${TypeDocument.tableName} As tt  
             WHERE td.e_type_document=tt.r_i AND td.e_acteur=$1 AND td.r_statut=$2 AND tt.r_intitule=$3
             ORDER BY r_i DESC`, [acteur_id, 1, intitule]);
         return res.rows[0];
@@ -145,7 +146,7 @@ const Document = {
                 td.r_chemin_fichier,
                 td.r_date_creer,
                 td.r_date_modif
-            FROM ${this.tableName} As td, t_type_document As tt  
+            FROM ${this.tableName} As td, ${TypeDocument.tableName} As tt  
             WHERE td.e_type_document=tt.r_i AND tt.r_intitule=$1 AND td.r_statut=$2`, [intitule, 1]);
             
         return (await res).rows;

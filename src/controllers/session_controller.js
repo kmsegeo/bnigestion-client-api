@@ -20,15 +20,15 @@ const connect = async (req, res, next) => {
      */
 
     console.log(`Connexion..`);
-    const {email, mdp} = req.body;
+    const {login, mdp} = req.body;
 
     console.log(req.headers.app_id);
     
     console.log(`Vérification des paramètres`);
-    Utils.expectedParameters({email}).then(async () => {
+    Utils.expectedParameters({login}).then(async () => {
 
         console.log(`Chargement de l'acteur`);
-        await Acteur.findByEmail(email).then(async acteur => {
+        await Acteur.findByEmailOrMobile(login).then(async acteur => {
             if (!acteur) return response(res, 401, `Login ou mot de passe incorrect !`);
             if (acteur.e_type_acteur && acteur.e_type_acteur=='1') return response(res, 401, `Ce compte n'est pas enregistré en tant que client`);
             console.log(`Vérification de mot de passe`)
@@ -67,6 +67,8 @@ const connect = async (req, res, next) => {
                             }).catch(err => next(err));
                         }
                         
+                        session.r_pconx = acteur.r_statut==2 ? true : false
+
                         console.log(`Chargement des documents de l'acteur`);
                         await Document.findAllByActeurId(acteur.r_i).then(async documents => {
                             acteur['documents'] = documents;
