@@ -252,7 +252,7 @@ const Acteur = {
   // },
 
   async updatePassword(acteur_id, mdp) {
-    const queryString = `UPDATE ${this.tableName} SET r_mdp=$1  WHERE r_i=$2 RETURNING r_mdp`;
+    const queryString = `UPDATE ${this.tableName} SET r_mdp=$1 WHERE r_i=$2 RETURNING r_mdp`;
     const res = await db.query(queryString, [mdp, acteur_id])
     return res.rows[0];
   },

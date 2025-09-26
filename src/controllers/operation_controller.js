@@ -630,7 +630,7 @@ const exportActeurOperation = async (req, res, next) => {
 
         // 💾 Sauvegarde locale du fichier
         const finalBytes = await outputPdf.save();
-        // const fileName = `_filtered.pdf`;
+        const fileName = `RELEVE_${dateDebut}_${dateFin}.pdf`;
         // const outputPath = path.join(__dirname, '../../uploads', fileName);
         // fs.writeFileSync(outputPath, finalBytes);
         // const chemin_fichier = `${req.protocol}://${req.get('host')}//bnigestion_api/v1/temp/${fileName}`;
@@ -640,7 +640,7 @@ const exportActeurOperation = async (req, res, next) => {
           // 📤 Aperçu direct dans le navigateur
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'inline; filename=filled_preview.pdf');
+        res.setHeader('Content-Disposition', 'inline; filename='+fileName);
         res.send(finalBytes);
 
     } catch (error) {

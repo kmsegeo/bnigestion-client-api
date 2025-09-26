@@ -77,6 +77,7 @@ const updatePassword = async (req, res, next) => {
                 await bcrypt.hash(new_mdp, 10).then(async hash => {
                     await Acteur.updatePassword(acteur.r_i, hash).then(async result => {
                         if (!result) return response(res, 400, `Une erreur s'est produite à la création du mot de passe !`);
+                        await Acteur.activeCompte(acteur.r_i).catch(err => response(res, 400, err));
                         return response(res, 200, `Mot de passe modifier avec succès`);
                     }).catch(err => next(err));
                 }).catch(err => next(err));
