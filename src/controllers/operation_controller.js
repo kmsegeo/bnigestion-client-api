@@ -431,14 +431,22 @@ const exportActeurOperation = async (req, res, next) => {
     
     try {
 
+        let selectedPages =  [1, 2];
+
         const acteur = await Acteur.findById(acteurId);
         const client = await Particulier.findByActeurId(acteurId);
 
         const fonds = await Fonds.findAll();
         const portefeuilles = await Portefeuille.findAllByActeurId(acteurId);
-        const operations = await Operation.findAllByActeurId();
+        const operations = await Operation.findAllByActeurId(acteurId);
+        const comptedepot = await CompteDepot.findByActeurId(acteurId);
 
-        const selectedPages =  [1,1];
+        // for (let f of fonds) {
+        //     let isFound = false;
+        //     for (let p of portefeuilles)
+        //         if (f.r_i==p.e_fonds) isFound = true;
+        //     if (isFound) selectedPages.push(1);
+        // }
 
         // Charger le PDF source
 
@@ -479,65 +487,145 @@ const exportActeurOperation = async (req, res, next) => {
         // ✍️ Écriture à des positions arbitraires (à ajuster selon le PDF)
 
         const pages = outputPdf.getPages();
+        
+        /* [PAGE i] */
 
-        /* [PAGE 1] */
-        for (let i=0; i<2; i++) {
+        let curPage = pages[0];
 
-            const firstPage = pages[i];
+        /* ENETE DE RELEVE */
+        curPage.drawText(`${acteur?.r_nom_complet}`, {x: 282, y: 708, size: fontSize, font: helvetica, color: fillcolor});
+        curPage.drawText(`${acteur?.r_adresse}`, {x: 282, y: 690, size: fontSize, font: helvetica, color: fillcolor});
+        curPage.drawText(`ABIDJAN`, {x: 282, y: 673, size: fontSize, font: helvetica, color: fillcolor});
+        curPage.drawText(`Compte N° : ${client?.r_ncompte_titre}`, {x: 282, y: 650, size: fontSize, font: helveticaBold, color: fillcolor});
+        curPage.drawText(new Date(dateFin).toLocaleDateString(), {x: 282, y: 600, size: 11, font: helveticaBold, color: fillcolor});
+        
+        let global_portefeuille = 0;
 
-            /* ENETE DE RELEVE */
-            firstPage.drawText(`${acteur?.r_nom_complet}`, {x: 282, y: 708, size: fontSize, font: helvetica, color: fillcolor});
-            firstPage.drawText(`${acteur?.r_adresse}`, {x: 282, y: 690, size: fontSize, font: helvetica, color: fillcolor});
-            firstPage.drawText(`ABIDJAN`, {x: 282, y: 673, size: fontSize, font: helvetica, color: fillcolor});
-            firstPage.drawText(`Compte N° : ${client?.r_ncompte_titre}`, {x: 282, y: 650, size: fontSize, font: helveticaBold, color: fillcolor});
-            firstPage.drawText(new Date(dateFin).toLocaleDateString(), {x: 282, y: 600, size: 11, font: helveticaBold, color: fillcolor});
-            
+        let pos = 478;
+        let pas = 16;
+
+        let i = 0;
+        for (let f of fonds) {
+
+            let cpt = 0;
+            let parts = 0;
+            let cours = 0;
+            let vl = 0;
+            let total = 0;
+            let rendement = 0;
+            let taux = 0;
+            let valeur = 0;
+
+            vl = await ValeurLiquidative.findLastByFonds(f.r_code);
+
+            for(let p of portefeuilles) {
+                
+                if (f.r_i==p.e_fonds) {
+                    if (p.r_statut==1) {
+                        parts = Number(parts) + Number(p.r_nombre_parts);
+                        cours = Number(cours) + Number(p.r_cours_placement);
+                        total = Number(total) + Number(p.r_montant_placement);
+                        cpt +=1;
+                    }
+                }
+            }
+
+            rendement = ((Number(vl.r_valeur_courante) * parts) - total);
+            taux = (rendement/total)*100;
+            valeur = total + rendement;
+
+            let total_placement = total.toFixed(2);
+            let nombre_parts = parts.toFixed(2);
+            let valeur_liquidative = Number(vl.r_valeur_courante);
+            let cours_moy_placement = (cours/cpt).toFixed(2);
+            let rendement_total = rendement.toFixed(2);
+            let taux_rendement = taux.toFixed(2);
+            let valeur_placement = Number(valeur.toFixed(2)); 
             
             /* RECAP. DE FONDS */
-            firstPage.drawText(new Date(dateFin).toLocaleDateString(), {x: 358, y: 529, size: 10, font: helvetica, color: fillcolor});
-            firstPage.drawText(`FCP OBLIG SECURITE`, {x: 50, y: 478, size: fontSize, font: helvetica, color: fillcolor});
+            curPage.drawText(new Date(dateFin).toLocaleDateString(), {x: 358, y: 529, size: 10, font: helvetica, color: fillcolor});
 
-            drawRightAligned(firstPage, 263, 478, `135`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 319, 478, `11 430`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 375, 478, `10 929`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 432, 478, `67 635`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 493, 478, `4,58`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 550, 478, `1 143 050`, fontSize, helveticaBold, fillcolor);
+            /* Calcule des valeurs du portefeuille */
+            curPage.drawText(f.r_intitule, {x: 50, y: pos, size: fontSize, font: helvetica, color: fillcolor});
+            drawRightAligned(curPage, 263, pos, `${nombre_parts}`, fontSize, helvetica, fillcolor);
+            drawRightAligned(curPage, 319, pos, `${valeur_liquidative}`, fontSize, helvetica, fillcolor);
+            drawRightAligned(curPage, 375, pos, `${cours_moy_placement}`, fontSize, helvetica, fillcolor);
+            drawRightAligned(curPage, 432, pos, `${rendement_total}`, fontSize, helvetica, fillcolor);
+            drawRightAligned(curPage, 493, pos, `${taux_rendement}`, fontSize, helvetica, fillcolor);
+            drawRightAligned(curPage, 550, pos, `${valeur_placement}`, fontSize, helveticaBold, fillcolor);
 
-            drawRightAligned(firstPage, 554, 438, `1 143 050`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 554, 420, `8 355`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 554, 400, `1 551 405`, fontSize, helveticaBold, fillcolor);
-
-            /* TABLEAU DE DETAILS */
-
-            firstPage.drawText(today.toLocaleDateString(), {x: 292, y: 334, size: 11, font: helveticaBold, color: fillcolor});
-            firstPage.drawText(dateDebut, {x: 358, y: 297, size: 10, font: helvetica, color: fillcolor});
-            firstPage.drawText(dateFin, {x: 442, y: 297, size: 10, font: helvetica, color: fillcolor});
-
-            firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 250, size: 10, font: helveticaBold, color: fillcolor});
-            firstPage.drawText(`Solde Initial`, {x: 122, y: 250, size: 10, font: helveticaBold, color: fillcolor});
-            drawRightAligned(firstPage, 548, 250, `0`, fontSize, helveticaBold, fillcolor);
-            
-            firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 230, size: 10, font: helvetica, color: fillcolor});
-            firstPage.drawText(`Versements Dépôt Espèces`, {x: 122, y: 230, size: 10, font: helvetica, color: fillcolor});
-            // drawRightAligned(firstPage, 414, 230, `0`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 478, 230, `1 500 000`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 548, 230, `1 500 000`, fontSize, helvetica, fillcolor);
-
-            firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 210, size: 10, font: helvetica, color: fillcolor});
-            firstPage.drawText(`Souscriptions  FCP OBLIG SECURITE - 135 Parts`, {x: 122, y: 210, size: 10, font: helvetica, color: fillcolor});
-            drawRightAligned(firstPage, 414, 210, `1 475 415`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 548, 210, `24 585`, fontSize, helvetica, fillcolor);
-
-            firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 190, size: 10, font: helvetica, color: fillcolor});
-            firstPage.drawText(`Retraits Frais de souscription`, {x: 122, y: 190, size: 10, font: helvetica, color: fillcolor});
-            drawRightAligned(firstPage, 414, 190, `16 230`, fontSize, helvetica, fillcolor);
-            drawRightAligned(firstPage, 548, 190, `8 355`, fontSize, helvetica, fillcolor);
-
-            firstPage.drawText(today.toLocaleDateString(), {x: 52, y: 170, size: 10, font: helveticaBold, color: fillcolor});
-            firstPage.drawText(`Solde liquidité`, {x: 122, y: 170, size: 10, font: helveticaBold, color: fillcolor});
-            drawRightAligned(firstPage, 548, 170, `8 355`, fontSize, helveticaBold, fillcolor);
+            global_portefeuille = global_portefeuille + Number(valeur_placement);
+            pos = pos - pas
+            i++
         }
+        
+        const total_general = global_portefeuille + Number(comptedepot.r_solde_disponible);
+
+        drawRightAligned(curPage, 552, 388, `${global_portefeuille}`, fontSize, helvetica, fillcolor);
+        drawRightAligned(curPage, 552, 368, `${comptedepot.r_solde_disponible}`, fontSize, helvetica, fillcolor);
+        drawRightAligned(curPage, 552, 345, `${total_general}`, fontSize, helveticaBold, fillcolor);
+    
+        /* TABLEAU DE DETAILS */
+
+        let posTop = 704;
+        pos = 196;
+        pas = 20;
+
+        curPage.drawText(new Date(dateFin).toLocaleDateString(), {x: 292, y: 279, size: 11, font: helveticaBold, color: fillcolor});
+        curPage.drawText(new Date(dateDebut).toLocaleDateString(), {x: 358, y: 242, size: 9, font: helvetica, color: fillcolor});
+        curPage.drawText(new Date(dateFin).toLocaleDateString(), {x: 442, y: 242, size: 9, font: helvetica, color: fillcolor});
+
+        for (let j=operations.length-1; j>=0; j--) {
+
+            if (j==operations.length-1) {
+                curPage.drawText(`${new Date(dateDebut).toLocaleDateString()}`, {x: 52, y: pos, size: fontSize, font: helveticaBold, color: fillcolor});
+                curPage.drawText(`Solde Initial`, {x: 121, y: pos, size: fontSize, font: helveticaBold, color: fillcolor});
+                drawRightAligned(curPage, 548, pos, `${operations[j]?.r_solde_courrant}`, fontSize, helveticaBold, fillcolor);
+                pos = pos-pas;
+            } 
+
+            if ((operations.length-1)<=5 || ((operations.length-1)-j)<6) {
+                
+                curPage.drawText(`${operations[j]?.r_date_creer.toLocaleDateString()}`, {x: 52, y: pos, size: fontSize, font: helvetica, color: fillcolor});
+                curPage.drawText(`${operations[j]?.r_libelle}`, {x: 122, y: pos, size: 9, font: helvetica, color: fillcolor});
+                let balance = 0;
+                if (operations[j]?.e_type_operation==7 || operations[j]?.e_type_operation==9) {
+                    balance = Number(operations[j]?.r_solde_courrant) - Number(operations[j]?.r_montant);
+                    drawRightAligned(curPage, 414, pos, `${operations[j]?.r_montant}`, fontSize, helvetica, fillcolor);
+                }
+                if (operations[j]?.e_type_operation==6 || operations[j]?.e_type_operation==8) {
+                    balance = Number(operations[j]?.r_solde_courrant) + Number(operations[j]?.r_montant);
+                    drawRightAligned(curPage, 478, pos, `${operations[j]?.r_montant}`, fontSize, helvetica, fillcolor);
+                }
+                drawRightAligned(curPage, 548, pos, `${balance}`, fontSize, helvetica, fillcolor);
+                
+                pos = pos-pas;
+
+            } else if ((operations.length-1)>6 && ((operations.length-1)-j)>6) {
+
+                curPage = pages[1];
+
+                curPage.drawText(`${operations[j]?.r_date_creer.toLocaleDateString()}`, {x: 52, y: posTop, size: fontSize, font: helvetica, color: fillcolor});
+                curPage.drawText(`${operations[j]?.r_libelle}`, {x: 122, y: posTop, size: 9, font: helvetica, color: fillcolor});
+                let balance = 0;
+                if (operations[j]?.e_type_operation==7 || operations[j]?.e_type_operation==9) {
+                    balance = Number(operations[j]?.r_solde_courrant) - Number(operations[j]?.r_montant);
+                    drawRightAligned(curPage, 414, posTop, `${operations[j]?.r_montant}`, fontSize, helvetica, fillcolor);
+                }
+                if (operations[j]?.e_type_operation==6 || operations[j]?.e_type_operation==8) {
+                    balance = Number(operations[j]?.r_solde_courrant) + Number(operations[j]?.r_montant);
+                    drawRightAligned(curPage, 478, posTop, `${operations[j]?.r_montant}`, fontSize, helvetica, fillcolor);
+                }
+                drawRightAligned(curPage, 548, posTop, `${balance}`, fontSize, helvetica, fillcolor);
+
+                posTop = posTop-pas
+            }
+        }
+    
+        curPage.drawText(`${comptedepot.r_date_modif.toLocaleDateString()}`, {x: 52, y: 80, size: fontSize, font: helveticaBold, color: fillcolor});
+        curPage.drawText(`Solde liquidité`, {x: 122, y: 80, size: 9, font: helveticaBold, color: fillcolor});
+        drawRightAligned(curPage, 548, 80, `${comptedepot.r_solde_disponible}`, fontSize, helveticaBold, fillcolor);
+            
         /* FIN */
 
         // 💾 Sauvegarde locale du fichier

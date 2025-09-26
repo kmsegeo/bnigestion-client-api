@@ -77,6 +77,7 @@ const connect = async (req, res, next) => {
                         delete acteur.r_mdp;
                         delete acteur.e_type_acteur;
                         delete acteur.r_statut;
+                        delete session.r_i;
                         delete session.r_statut
                         delete session.e_acteur;
                         delete session.e_canal;
