@@ -431,7 +431,7 @@ const exportActeurOperation = async (req, res, next) => {
     
     try {
 
-        let selectedPages =  [1, 2];
+        
 
         const acteur = await Acteur.findById(acteurId);
         const client = await Particulier.findByActeurId(acteurId);
@@ -457,6 +457,10 @@ const exportActeurOperation = async (req, res, next) => {
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
         const outputPdf = await PDFDocument.create();
+
+        let selectedPages = [1];
+        if (operations.length>5)
+            selectedPages.push(2);
 
         // Copier uniquement les pages sélectionnées
         const totalPages = pdfDoc.getPageCount();

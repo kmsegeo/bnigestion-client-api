@@ -247,7 +247,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
+                "login": {
                   "example": "any"
                 },
                 "mdp": {
@@ -405,7 +405,7 @@
         }
       }
     },
-    "/v1/acteurs/operations/": {
+    "/v1/acteurs/comptedepot/": {
       "get": {
         "description": "",
         "parameters": [
@@ -475,7 +475,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "fonds_code": {
+                "code_fonds": {
                   "example": "any"
                 },
                 "montant": {
@@ -498,11 +498,6 @@
         "parameters": [
           {
             "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "op_code",
             "in": "header",
             "type": "string"
           }
@@ -536,7 +531,7 @@
         }
       }
     },
-    "/v1/acteurs/comptedepot/": {
+    "/v1/acteurs/operations/": {
       "get": {
         "description": "",
         "parameters": [
@@ -549,6 +544,38 @@
         "responses": {
           "default": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/v1/acteurs/operations/export/{debut}/{fin}/pdf": {
+      "get": {
+        "description": "",
+        "produces": [
+          "application/pdf"
+        ],
+        "parameters": [
+          {
+            "name": "debut",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "fin",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -570,13 +597,46 @@
         }
       }
     },
-    "/v1/acteurs/portefeuilles/actifs": {
+    "/v1/acteurs/portefeuilles/chart": {
       "get": {
         "description": "",
         "parameters": [
           {
             "name": "authorization",
             "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "periode",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/v1/acteurs/portefeuilles/{code_fonds}/chart": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "code_fonds",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "periode",
+            "in": "query",
             "type": "string"
           }
         ],
