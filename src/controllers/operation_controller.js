@@ -82,37 +82,42 @@ const opDepot = async (req, res, next) => {
          */
 
         await TypeOperation.findByIntitule('depot').then(async type_operation => {
-            await Operation.create(acteurId, type_operation.r_i, {
-                reference_operateur: null, 
-                libelle: "DEPOT - N° DE TRANSACTION: " + mobile_payeur, 
-                montant: nv_montant, 
-                frais_operation: 0, 
-                frais_operateur: frais_operateur, 
-                compte_paiement: mobile_payeur
-            }).then(async operation => {
-                console.log("Approvisionnement de compte de depot");
-                
-                operation['r_type_operation'] = type_operation.r_intitule;
-                operation['r_statut'] = operation_statuts[operation.r_statut];
+            if(!type_operation) return response(res, 404, `Type opération non trouvé !`);  
+            await CompteDepot.findByActeurId(acteurId).then(async compte => {
+                if (!compte) return response(res, 404, `Compte de dépôt inexistant`);
+                await Operation.create(acteurId, type_operation.r_i, {
+                    reference_operateur: null, 
+                    libelle: "DEPOT - N° DE TRANSACTION: " + mobile_payeur, 
+                    montant: nv_montant, 
+                    frais_operation: 0, 
+                    frais_operateur: frais_operateur, 
+                    compte_paiement: mobile_payeur,
+                    solde_courrant: compte.r_solde_disponible
+                }).then(async operation => {
+                    console.log("Approvisionnement de compte de depot");
 
-                delete operation.r_i;
-                delete operation.e_acteur;
-                delete operation.e_type_operation;
-                delete operation.r_date_modif;
+                    operation['r_type_operation'] = type_operation.r_intitule.toUpperCase();
+                    
+                    console.log('solde initial:', compte.r_solde_disponible);
+                    operation['r_solde_initial'] = operation.r_solde_courrant;
 
-                /**
-                 * - Exécution de la transaction coté operateur, 
-                 * - Suivi de la modification du statut par webhook (statut: 1 = ok et 2 = rejeté),
-                 * - Avec impact sur le compte de depot.
-                 */
+                    operation['r_statut'] = operation_statuts[operation.r_statut];
 
-                //--- à supprimer plutard ----------------------------------------------------------
-                
-                console.log(`Mise à jour du compte de dépôt`);
-                
-                await CompteDepot.findByActeurId(acteurId).then(async compte => {
-                    if (!compte) return response(res, 404, `Compte de dépôt inexistant`);
-                    console.log(`Début du dépôt sur compte de dépôt`);
+                    delete operation.r_i;
+                    delete operation.e_acteur;
+                    delete operation.e_type_operation;
+                    delete operation.r_date_modif;
+                    delete operation.r_solde_courrant;
+
+                    /**
+                     * - Exécution de la transaction coté operateur, 
+                     * - Suivi de la modification du statut par webhook (statut: 1 = ok et 2 = rejeté),
+                     * - Avec impact sur le compte de depot.
+                     */
+
+                    //--- à supprimer plutard ----------------------------------------------------------
+                    
+                    console.log(`Mise à jour du compte de dépôt`);
                     const solde_disponible = compte.r_solde_disponible ? compte.r_solde_disponible : 0;
                     const newMontant = Number(solde_disponible) + Number(operation.r_montant);
                     console.log('solde disponible:', solde_disponible)
@@ -121,12 +126,13 @@ const opDepot = async (req, res, next) => {
                         await Operation.updateSuccess(operation.r_reference).catch(err => next(err));
                         console.log(`Dépôt sur le compte termné`);
                         console.log('nouveau solde:', result.r_solde_disponible);
+                        operation['r_solde_disponible'] = result.r_solde_disponible;
                         return response(res, 201, "Opération termné", operation);
                     }).catch(err => console.log(err));
+
+                    //----------------------- ----------------------------------------------------------
+
                 }).catch(err => next(err));
-
-                //----------------------- ----------------------------------------------------------
-
             }).catch(err => next(err));
         }).catch(err => next(err));
 
@@ -171,7 +177,8 @@ const opSouscription = async (req, res, next) => {
                                     montant: montant, 
                                     frais_operation: commission, 
                                     frais_operateur: 0, 
-                                    compte_paiement: particulier.r_ncompte_titre 
+                                    compte_paiement: particulier.r_ncompte_titre, 
+                                    solde_courrant: solde_disponible
                                 }).then(async operation => {
                                     if (!operation) return response(res, 400, `Une erreur s'est produite lors de la souscription !`);
                                     const cour = vl.r_valeur_courante;
@@ -182,14 +189,18 @@ const opSouscription = async (req, res, next) => {
                                         nombre_parts: part.toFixed(2), 
                                         valeur_placement: total
                                     }).then(async portefeuille => {
+                                        portefeuille['r_libelle'] = operation.r_libelle;
+                                        portefeuille['r_type_operation'] = type_operation.r_intitule.toUpperCase();
                                         portefeuille['r_intitule_fonds'] = fonds.r_intitule;
                                         portefeuille['r_statut'] = portefeuille_statuts[portefeuille.r_statut];
+                                        portefeuille['r_solde_initial'] = solde_disponible;
+                                        portefeuille['r_solde_disponible'] = newCompte.r_solde_disponible;
                                         delete portefeuille.r_i;
                                         delete portefeuille.e_acteur;
                                         delete portefeuille.e_fonds;
                                         delete portefeuille.e_operation;
                                         delete portefeuille.r_date_modif;
-                                        return response(res, 201, `Soucription terminé`, portefeuille);
+                                        return response(res, 201, `Opération terminé`, portefeuille);
                                     }).catch(err => next(err));
                                 }).catch(err => next(err));
                             }).catch(err => next(err));

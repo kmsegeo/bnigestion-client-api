@@ -11,7 +11,7 @@ const Operation = {
         return res.rows;
     },
 
-    async create(acteur, type_operation, {reference_operateur, libelle, montant, frais_operation, frais_operateur, compte_paiement}) {
+    async create(acteur, type_operation, {reference_operateur, libelle, montant, frais_operation, frais_operateur, compte_paiement, solde_courrant}) {
             
         const date = new Date();
 
@@ -26,10 +26,11 @@ const Operation = {
                 r_frais_operation,
                 r_frais_operateur,
                 r_compte_paiement,
+                r_solde_courrant,
                 r_statut,
                 e_acteur,
                 e_type_operation)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
             RETURNING *`, [
                 uuid.v4(), 
                 reference_operateur, 
@@ -40,6 +41,7 @@ const Operation = {
                 frais_operation, 
                 frais_operateur, 
                 compte_paiement, 
+                solde_courrant,
                 0, 
                 acteur, 
                 type_operation
