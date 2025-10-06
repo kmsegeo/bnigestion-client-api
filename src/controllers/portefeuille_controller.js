@@ -4,7 +4,6 @@ const response = require('../middlewares/response');
 const Fonds = require('../models/Fonds');
 const Portefeuille = require('../models/Portefeuille');
 const ValeurLiquidative = require('../models/ValeurLiquidative');
-const { propfind } = require('../routes/ressources_routes');
 const Utils = require('../utils/utils.methods');
 
 const portefeuille_statuts = default_data.portefeuille_statuts

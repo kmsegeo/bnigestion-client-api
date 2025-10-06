@@ -11,8 +11,8 @@ router.get('/langues', clientRsrcController.getLanguePreferee);
 router.get('/type-acteurs', clientRsrcController.getAllTypeActeurs);
 router.get('/type-operations', operationController.getAllTypeOperations);
 
-router.get('/fonds', session_verify, fondsController.getAllFonds);
-router.get('/fonds/:code', session_verify, fondsController.getOneFonds);
-router.get('/fonds/:code/vls', session_verify, fondsController.getAllVlsByFonds);
+router.get('/fonds', fondsController.getAllFonds);
+router.get('/fonds/:code', fondsController.getOneFonds);
+router.get('/fonds/:code/vls', fondsController.getAllVlsByFonds);
 
 module.exports = router;

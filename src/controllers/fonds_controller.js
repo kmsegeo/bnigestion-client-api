@@ -14,6 +14,7 @@ const getAllFonds = async (req, res, next) => {
                 f["r_taux_redement"] = vl.r_taux_redement,
                 f["r_rendement_positive"] = vl.r_rendement_positive
             }).catch(err=>next(err));
+            delete f.r_i
         }
         return response(res, 200, "Liste des fonds", fonds)
     }).catch(err => next(err));
