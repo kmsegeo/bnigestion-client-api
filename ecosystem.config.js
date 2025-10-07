@@ -1,6 +1,6 @@
 module.exports = {
     apps: [{
-        name: "bnigestion-api-client1",
+        name: "bnigestion-api-client",
         script: "server.js",
         instances: "max",
         exec_mode: "cluster",
