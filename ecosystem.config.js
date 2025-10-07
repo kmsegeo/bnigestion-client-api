@@ -3,7 +3,7 @@ module.exports = {
         name: "bnigestion-api-client",
         script: "server.js",
         instances: "max",
-        exec_mode: "cluster",
+        // exec_mode: "cluster",
         watch: false,
         max_memory_restart: "512M",
         env: {
